@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2>Presidential Candidate Registration</h2>
+        </div>
+        <div class="card-body">
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <strong>Error:</strong> Please correct the errors below.
+                <ul>
+                    {% for field in form %}
+                    {% for error in field.errors %}
+                    <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <h4 class="mb-3">Personal Details</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.full_name.label_tag }}
+                        {{ form.full_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.ballot_name.label_tag }}
+                        {{ form.ballot_name }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.date_of_birth.label_tag }}
+                        {{ form.date_of_birth }}
+                        <small class="text-muted">Must be at least 30 years old.</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.nic.label_tag }}
+                        {{ form.nic }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.gender.label_tag }}
+                        {{ form.gender }}
+                    </div>
+                </div>
+
+                <h4 class="mb-3">Contact Details</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.address.label_tag }}
+                        {{ form.address }}
+                        <small class="text-muted">Must match the address in the Electoral Register.</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.mailing_address.label_tag }}
+                        {{ form.mailing_address }}
+                        <small class="text-muted">If different from the permanent address.</small>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.contact_number.label_tag }}
+                        {{ form.contact_number }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                    </div>
+                </div>
+
+                <hr>
+
+                <h4 class="mb-3">Electoral Qualification (Voter Status)</h4>
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            {{ form.is_registered_voter }}
+                            <label class="form-check-label fw-bold" for="{{ form.is_registered_voter.id_for_label }}">
+                                {{ form.is_registered_voter.label }}
+                            </label>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.electoral_district.label_tag }}
+                                {{ form.electoral_district }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.polling_division.label_tag }}
+                                {{ form.polling_division }}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.gn_division.label_tag }}
+                                {{ form.gn_division }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.registration_number.label_tag }}
+                                {{ form.registration_number }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h4 class="mb-3">Nomination Details</h4>
+                <div class="mb-3">
+                    {{ form.nomination_type.label_tag }}
+                    {{ form.nomination_type }}
+                </div>
+
+                <!-- Party Fields -->
+                <div id="party-fields" style="display: none;">
+                    <div class="card card-body bg-light mb-3">
+                        <h5>Party Details</h5>
+                        <div class="mb-3">
+                            {{ form.party_name.label_tag }}
+                            {{ form.party_name }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.party_secretary_name.label_tag }}
+                            {{ form.party_secretary_name }}
+                        </div>
+                        <div class="mb-3" id="party-symbol-display" style="display: none;">
+                            <label>Party Symbol (Auto-assigned):</label>
+                            <div class="border p-3 text-center bg-white rounded">
+                                <strong id="symbol-name" class="display-6"></strong>
+                                <p class="text-muted small mb-0">Symbol will be assigned upon registration.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Independent Fields -->
+                <div id="independent-fields" style="display: none;">
+                    <div class="card card-body bg-light mb-3">
+                        <h5>Independent Candidate Details</h5>
+                        <div class="mb-3">
+                            {{ form.nominator_nic.label_tag }}
+                            {{ form.nominator_nic }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.mp_status_proof.label_tag }}
+                            {{ form.mp_status_proof }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h4 class="mb-3">Mandatory Documents</h4>
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <h5 class="mb-3">Candidate Photograph</h5>
+                        <p class="text-muted small mb-2">
+                            Upload a recent, passport-style colour photograph of the candidate.
+                            This image will be used for the voter information and ballot display.
+                        </p>
+                        <div class="mb-3">
+                            {{ form.candidate_photo.label_tag }}
+                            {{ form.candidate_photo }}
+                        </div>
+
+                        <hr>
+
+                        <h5 class="mb-3">Form A – Nomination Paper</h5>
+                        <p class="text-muted small mb-2">
+                            Upload the officially signed Form A (Nomination Paper) in PDF format.
+                            Ensure the document is complete, legible, and certified where required.
+                        </p>
+                        <div class="mb-3">
+                            {{ form.form_a.label_tag }}
+                            {{ form.form_a }}
+                        </div>
+
+                        <hr>
+
+                        <h5 class="mb-3">Asset Declaration</h5>
+                        <p class="text-muted small mb-2">
+                            Upload the most recent Asset and Liability Declaration in PDF format,
+                            as required under the relevant laws and regulations.
+                        </p>
+                        <div class="mb-3">
+                            {{ form.asset_declaration.label_tag }}
+                            {{ form.asset_declaration }}
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h4 class="mb-3">Terms & Conditions</h4>
+                <div class="card bg-light mb-3">
+                    <div class="card-body">
+                        <p class="fw-bold">I hereby declare that:</p>
+                        <ul class="list-unstyled">
+                            <li>✅ I am a citizen of Sri Lanka.</li>
+                            <li>✅ I am at least thirty years old.</li>
+                            <li>✅ I am qualified to be an elector.</li>
+                            <li>✅ I am not disqualified under the Constitution.</li>
+                            <li>✅ I have not served two full terms as President.</li>
+                            <li>✅ All information provided herein is true and accurate.</li>
+                        </ul>
+                        <div class="form-check mt-3">
+                            {{ form.eligibility_declaration }}
+                            <label class="form-check-label fw-bold"
+                                for="{{ form.eligibility_declaration.id_for_label }}">
+                                {{ form.eligibility_declaration.label }}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100">Submit Nomination</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const nominationType = document.getElementById('id_nomination_type');
+        const partyFields = document.getElementById('party-fields');
+        const independentFields = document.getElementById('independent-fields');
+        const partyName = document.getElementById('id_party_name');
+        const symbolDisplay = document.getElementById('party-symbol-display');
+        const symbolName = document.getElementById('symbol-name');
+
+        const partySymbols = {
+            'SLPP': '🌸 (Pohottuwa)',
+            'SJB': '📞 (Telephone)',
+            'NPP': '🧭 (Compass)',
+            'SLFP': '🖐 (Hand)',
+            'UNP': '🐘 (Elephant)'
+        };
+
+        const partySecretaries = {
+            'SLPP': 'Sagara Kariyawasam',
+            'SJB': 'Ranjith Madduma Bandara',
+            'NPP': 'Dr. Nihal Abeysinghe',
+            'SLFP': 'Duminda Dissanayake',
+            'UNP': 'Palitha Range Bandara'
+        };
+
+        function toggleFields() {
+            const value = nominationType.value;
+            if (value === 'PARTY') {
+                partyFields.style.display = 'block';
+                independentFields.style.display = 'none';
+            } else if (value === 'INDEPENDENT') {
+                partyFields.style.display = 'none';
+                independentFields.style.display = 'block';
+            } else {
+                partyFields.style.display = 'none';
+                independentFields.style.display = 'none';
+            }
+        }
+
+        function updatePartyDetails() {
+            const party = partyName.value;
+            const secretaryField = document.getElementById('id_party_secretary_name');
+
+            // Update Symbol
+            if (party && partySymbols[party]) {
+                symbolDisplay.style.display = 'block';
+                symbolName.textContent = partySymbols[party];
+            } else {
+                symbolDisplay.style.display = 'none';
+            }
+
+            // Auto-fill Secretary Name
+            if (party && partySecretaries[party]) {
+                secretaryField.value = partySecretaries[party];
+            } else {
+                secretaryField.value = '';
+            }
+        }
+
+        nominationType.addEventListener('change', toggleFields);
+        partyName.addEventListener('change', updatePartyDetails);
+        toggleFields(); // Initial check
+        updatePartyDetails(); // Initial check
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Commission - Voting Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fceefc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background-color: #b30000;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            margin-left: 15px;
+        }
+
+        .home-icon {
+            font-size: 1.5rem;
+        }
+
+        /* Sub-header */
+        .sub-header {
+            background-color: #ffe6f2;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .sub-header div {
+            margin: 2px 0;
+        }
+
+        .sub-header .sinhala {
+            font-family: 'Iskoola Pota', sans-serif;
+            font-weight: bold;
+            color: #800080;
+        }
+
+        .sub-header .tamil {
+            font-size: 0.9rem;
+            color: #4a004a;
+        }
+
+        .sub-header .english {
+            font-size: 0.9rem;
+            color: #4a004a;
+        }
+
+        /* Color Bar */
+        .color-bar {
+            display: flex;
+            height: 5px;
+        }
+
+        .color-bar div {
+            flex: 1;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            justify-content: center;
+        }
+
+        /* Candidate Card */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-img-container {
+            width: 120px;
+            height: 90px;
+            background-color: #f0f0f0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-img-placeholder {
+            font-size: 2.5rem;
+            color: #888;
+        }
+
+        .card-name {
+            width: 100%;
+            padding: 5px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-party {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .vote-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #800080;
+            background: white;
+            color: #800080;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .vote-btn:hover {
+            background-color: #f0f0f0;
+        }
+
+        .vote-btn.selected-1 {
+            background-color: #800080;
+            color: white;
+        }
+
+        .vote-btn.selected-2 {
+            background-color: #008000;
+            color: white;
+            border-color: #008000;
+        }
+
+        .vote-btn.selected-3 {
+            background-color: #800000;
+            color: white;
+            border-color: #800000;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #ffe6f2;
+            padding: 15px 20px;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .footer-title {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .preferences-display {
+            display: flex;
+            gap: 10px;
+        }
+
+        .pref-slot {
+            width: 100px;
+            height: 120px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 5px;
+            font-size: 0.8rem;
+        }
+
+        .pref-rank {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ddd;
+            padding: 2px 6px;
+            font-size: 0.8rem;
+            border-bottom-left-radius: 4px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-reset {
+            background-color: #ffd700;
+            border: none;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-confirm {
+            background-color: #00b33c;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-confirm:hover {
+            background-color: #009933;
+        }
+
+        .btn-reset:hover {
+            background-color: #e6c200;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <span class="home-icon">🏠</span>
+        <h1>Janaadhipathiwarana - 2024</h1>
+    </div>
+
+    <div class="sub-header">
+        <div class="sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+        <div class="tamil">தேர்தல் ஆணையம்</div>
+        <div class="english">Election Commission</div>
+    </div>
+
+    <div class="color-bar">
+        <div style="background-color: #008080;"></div>
+        <div style="background-color: #ff8c00;"></div>
+        <div style="background-color: #ffd700;"></div>
+        <div style="background-color: #800080;"></div>
+    </div>
+
+    <div class="main-content">
+        {% for candidate in candidates %}
+        <div class="card">
+            <div class="card-img-container">
+                {% if candidate.candidate_photo %}
+                <img src="{{ candidate.candidate_photo.url }}" alt="{{ candidate.ballot_name }}">
+                {% else %}
+                <span class="card-img-placeholder">👤</span>
+                {% endif %}
+            </div>
+            <div class="card-name" style="background-color: {{ candidate.color }};">
+                {{ candidate.ballot_name }}
+            </div>
+            <div class="card-party">
+                {{ candidate.party_name|default:"Independent" }}
+            </div>
+            <div class="vote-buttons">
+                <button class="vote-btn"
+                    onclick="selectPreference(1, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', this)">1</button>
+                <button class="vote-btn"
+                    onclick="selectPreference(2, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', this)">2</button>
+                <button class="vote-btn"
+                    onclick="selectPreference(3, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', this)">3</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="footer">
+        <div class="footer-title">ඔබගේ මනාපයන් (Your Preferences):</div>
+        <div class="footer-content">
+            <div class="preferences-display">
+                <div class="pref-slot" id="slot-1">
+                    <span class="pref-rank">1</span>
+                    <span class="slot-text">Empty</span>
+                </div>
+                <div class="pref-slot" id="slot-2">
+                    <span class="pref-rank">2</span>
+                    <span class="slot-text">Empty</span>
+                </div>
+                <div class="pref-slot" id="slot-3">
+                    <span class="pref-rank">3</span>
+                    <span class="slot-text">Empty</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-reset" onclick="resetPreferences()">නැවත<br>ආරම්භ<br>කරන්න</button>
+                <button class="btn-confirm" onclick="confirmVote()">තහවුරු කරන්න</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let preferences = { 1: null, 2: null, 3: null };
+
+        function selectPreference(rank, candidateId, candidateName, btnElement) {
+            // Remove candidate if already selected in another rank
+            for (let r in preferences) {
+                if (preferences[r] && preferences[r].id === candidateId) {
+                    preferences[r] = null;
+                }
+            }
+
+            // Set new preference
+            preferences[rank] = { id: candidateId, name: candidateName };
+
+            updateUI();
+        }
+
+        function resetPreferences() {
+            preferences = { 1: null, 2: null, 3: null };
+            updateUI();
+        }
+
+        function updateUI() {
+            // Update Slots
+            for (let r = 1; r <= 3; r++) {
+                const slot = document.getElementById(`slot-${r}`);
+                const textSpan = slot.querySelector('.slot-text');
+                if (preferences[r]) {
+                    textSpan.textContent = preferences[r].name;
+                    textSpan.style.fontWeight = 'bold';
+                    textSpan.style.color = 'black';
+                } else {
+                    textSpan.textContent = 'Empty';
+                    textSpan.style.fontWeight = 'normal';
+                    textSpan.style.color = '#aaa';
+                }
+            }
+
+            // Update Buttons
+            document.querySelectorAll('.vote-btn').forEach(btn => {
+                btn.className = 'vote-btn'; // Reset classes
+            });
+
+            for (let r = 1; r <= 3; r++) {
+                if (preferences[r]) {
+                    const cid = preferences[r].id;
+                    // Find buttons for this candidate
+                    // This is a bit inefficient but simple. 
+                    // We need to find the button corresponding to this candidate and rank.
+                    // We can use the onclick attribute or data attributes if we added them.
+                    // Let's rely on the fact that we can iterate all buttons.
+
+                    // Better approach: Add data attributes to buttons
+                }
+            }
+
+            // Re-apply classes based on state
+            // Since we didn't add data attributes to buttons easily in the loop above without modifying HTML structure significantly,
+            // let's do a quick pass.
+            // Actually, let's modify the HTML generation to include data-id and data-rank
+        }
+    </script>
+
+    <!-- Improved Script with Data Attributes -->
+    <script>
+        // Overwriting the previous script block logic for cleaner implementation
+
+        // Re-attach event listeners or use the inline onclicks?
+        // Let's stick to the inline onclicks but improve the updateUI logic.
+
+        function updateUI() {
+            // Update Slots
+            for (let r = 1; r <= 3; r++) {
+                const slot = document.getElementById(`slot-${r}`);
+                const textSpan = slot.querySelector('.slot-text');
+                if (preferences[r]) {
+                    textSpan.textContent = preferences[r].name;
+                    textSpan.style.fontWeight = 'bold';
+                    textSpan.style.color = 'black';
+                } else {
+                    textSpan.textContent = 'Empty';
+                    textSpan.style.fontWeight = 'normal';
+                    textSpan.style.color = '#aaa';
+                }
+            }
+
+            // Update Buttons
+            const allButtons = document.querySelectorAll('.vote-btn');
+            allButtons.forEach(btn => {
+                // Parse the onclick to get params (hacky but works without changing HTML structure too much)
+                // onclick="selectPreference(1, 'id', 'name', this)"
+                const onclickStr = btn.getAttribute('onclick');
+                const rankMatch = onclickStr.match(/selectPreference\((\d+),\s*'([^']+)'/);
+
+                if (rankMatch) {
+                    const rank = parseInt(rankMatch[1]);
+                    const cid = rankMatch[2];
+
+                    // Reset style
+                    btn.classList.remove('selected-1', 'selected-2', 'selected-3');
+
+                    // Check if this button is selected
+                    if (preferences[rank] && preferences[rank].id === cid) {
+                        btn.classList.add(`selected-${rank}`);
+                    }
+                }
+            });
+        }
+
+        function confirmVote() {
+            // Check if at least one preference is selected
+            if (!preferences[1] && !preferences[2] && !preferences[3]) {
+                alert("Please select at least one preference.");
+                return;
+            }
+
+            const payload = {
+                preferences: {}
+            };
+            if (preferences[1]) payload.preferences['1'] = preferences[1].id;
+            if (preferences[2]) payload.preferences['2'] = preferences[2].id;
+            if (preferences[3]) payload.preferences['3'] = preferences[3].id;
+
+            fetch('/voting/submit/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Vote Submitted Successfully!');
+                        resetPreferences();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                });
+        }
+
+        // Helper to get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+
+</html>

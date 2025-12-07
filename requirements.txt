@@ -1,0 +1,4 @@
+django
+django-mongodb-backend
+pillow
+cryptography

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Live Election Results</h2>
+        <span class="badge bg-success" id="last-updated">Updated: Just now</span>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="bg-dark text-white">
+                        <tr>
+                            <th scope="col" class="py-3 ps-4">Candidate</th>
+                            <th scope="col" class="py-3">Party</th>
+                            <th scope="col" class="py-3 text-center">1st Preference</th>
+                            <th scope="col" class="py-3 text-center">2nd Preference</th>
+                            <th scope="col" class="py-3 text-center">3rd Preference</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results %}
+                        <tr>
+                            <td class="ps-4 fw-bold">
+                                <span class="d-inline-block rounded-circle me-2"
+                                    style="width: 12px; height: 12px; background-color: {{ row.color }};"></span>
+                                {{ row.name }}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ row.party }}</span>
+                            </td>
+                            <td class="text-center fw-bold fs-5 text-primary">{{ row.counts.1 }}</td>
+                            <td class="text-center text-secondary">{{ row.counts.2 }}</td>
+                            <td class="text-center text-secondary">{{ row.counts.3 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">No votes recorded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-3 text-muted small">
+        Page refreshes automatically every 30 seconds.
+    </div>
+</div>
+
+<script>
+    // Auto-refresh every 30 seconds
+    setTimeout(function () {
+        location.reload();
+    }, 30000);
+
+    // Update timestamp
+    const now = new Date();
+    document.getElementById('last-updated').textContent = 'Last Updated: ' + now.toLocaleTimeString();
+</script>
+{% endblock %}
