@@ -21,13 +21,38 @@ def get_party_color(party_name):
     }
     return colors.get(party_name, "#666666")
 
+def get_party_symbol(party_name):
+    """Map party names to their symbol image filenames"""
+    symbols = {
+        "SJB": "SJB.png",
+        "SLPP": "SLPP.png",
+        "NPP": "NPP.png",
+        "SLFP": "SLFP.png",
+        "UNP": "Democratic United National Front.png",  # Assuming UNP uses this
+        "MJP": "MJP.png",
+    }
+    return symbols.get(party_name, None)
+
 @ensure_csrf_cookie
 def index(request):
     candidates_qs = Candidate.objects.all()
     candidates = []
     for c in candidates_qs:
-        # Add color attribute dynamically for the template
+        # Add color and party symbol attributes dynamically for the template
         c.color = get_party_color(c.party_name)
+        symbol_filename = get_party_symbol(c.party_name)
+        if symbol_filename:
+            c.party_symbol_url = f"{settings.MEDIA_URL}party_symbols/{symbol_filename}"
+        else:
+            c.party_symbol_url = None
+        
+        # Extract short English name (first and last name only)
+        name_parts = c.full_name.split()
+        if len(name_parts) >= 2:
+            c.short_name = f"{name_parts[0]} {name_parts[-1]}"
+        else:
+            c.short_name = c.full_name
+        
         candidates.append(c)
         
     return render(request, 'voting/index.html', {'candidates': candidates})

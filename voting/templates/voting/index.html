@@ -184,23 +184,48 @@
 
         .card-name {
             width: 100%;
-            padding: 5px;
+            padding: 8px 5px;
             color: white;
             font-weight: bold;
-            font-size: 0.9rem;
             margin-bottom: 5px;
             border-radius: 4px;
             box-sizing: border-box;
-            min-height: 40px;
+            min-height: 50px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 2px;
+        }
+
+        .name-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.2;
+        }
+
+        .name-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
         }
 
         .card-party {
             font-size: 0.8rem;
             color: #555;
             margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .party-symbol {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
         }
 
         .vote-buttons {
@@ -372,10 +397,15 @@
                 {% endif %}
             </div>
             <div class="card-name" style="background-color: {{ candidate.color }};">
-                {{ candidate.ballot_name }}
+                <div class="name-sinhala">{{ candidate.ballot_name }}</div>
+                <div class="name-english">{{ candidate.short_name|upper }}</div>
             </div>
             <div class="card-party">
-                {{ candidate.party_name|default:"Independent" }}
+                {% if candidate.party_symbol_url %}
+                <img src="{{ candidate.party_symbol_url }}" alt="{{ candidate.party_name }} symbol"
+                    class="party-symbol">
+                {% endif %}
+                <span>{{ candidate.party_name|default:"Independent" }}</span>
             </div>
             <div class="vote-buttons">
                 <button class="vote-btn"
