@@ -8,7 +8,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #fceefc;
+            background-color: #ffffff;
             margin: 0;
             padding: 0;
             display: flex;
@@ -16,63 +16,117 @@
             height: 100vh;
         }
 
-        /* Header */
-        .header {
-            background-color: #b30000;
-            color: white;
+        /* Top Bar */
+        .top-bar {
+            background-color: white;
             padding: 10px 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            margin-left: 15px;
         }
 
         .home-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+            color: black;
+            text-decoration: none;
+        }
+
+        .page-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
             font-size: 1.5rem;
+            font-weight: bold;
+            color: black;
         }
 
-        /* Sub-header */
-        .sub-header {
-            background-color: #ffe6f2;
-            text-align: center;
+        /* Election Commission Box */
+        .commission-container {
+            display: flex;
+            justify-content: center;
             padding: 10px;
-            border-bottom: 1px solid #e0e0e0;
+            background-color: white;
         }
 
-        .sub-header div {
+        .commission-box {
+            background-color: #e8e8e8;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 2500px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .commission-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            gap: 20px;
+        }
+
+        .emblem {
+            width: 60px;
+            height: auto;
+        }
+
+        .text-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.1rem;
+            color: #4b0082;
+            /* Indigo/Purple shade */
+            font-weight: bold;
+        }
+
+        .text-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.9rem;
+            color: #4b0082;
             margin: 2px 0;
         }
 
-        .sub-header .sinhala {
-            font-family: 'Iskoola Pota', sans-serif;
+        .text-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.9rem;
+            color: #4b0082;
             font-weight: bold;
-            color: #800080;
-        }
-
-        .sub-header .tamil {
-            font-size: 0.9rem;
-            color: #4a004a;
-        }
-
-        .sub-header .english {
-            font-size: 0.9rem;
-            color: #4a004a;
         }
 
         /* Color Bar */
-        .color-bar {
+        .color-strip {
             display: flex;
-            height: 5px;
+            height: 8px;
+            width: 100%;
+            margin-top: 5px;
         }
 
-        .color-bar div {
+        .strip-green {
+            background-color: #005f56;
             flex: 1;
+        }
+
+        .strip-orange {
+            background-color: #e37e00;
+            flex: 1;
+        }
+
+        .strip-yellow {
+            background-color: #ffc400;
+            flex: 2;
+        }
+
+        .strip-maroon {
+            background-color: #781830;
+            flex: 3;
         }
 
         /* Main Content */
@@ -84,6 +138,7 @@
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 20px;
             justify-content: center;
+            background-color: #fceefc;
         }
 
         /* Candidate Card */
@@ -281,22 +336,29 @@
 
 <body>
 
-    <div class="header">
-        <span class="home-icon">🏠</span>
-        <h1>Janaadhipathiwarana - 2024</h1>
+    <div class="top-bar">
+        <a href="/" class="home-icon">🏠</a>
+        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
     </div>
 
-    <div class="sub-header">
-        <div class="sinhala">මැතිවරණ කොමිෂන් සභාව</div>
-        <div class="tamil">தேர்தல் ஆணையம்</div>
-        <div class="english">Election Commission</div>
-    </div>
-
-    <div class="color-bar">
-        <div style="background-color: #008080;"></div>
-        <div style="background-color: #ff8c00;"></div>
-        <div style="background-color: #ffd700;"></div>
-        <div style="background-color: #800080;"></div>
+    <div class="commission-container">
+        <div class="commission-box">
+            <div class="commission-content">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Emblem_of_Sri_Lanka.svg/240px-Emblem_of_Sri_Lanka.svg.png"
+                    alt="Emblem" class="emblem">
+                <div class="text-content">
+                    <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english">Election Commission</div>
+                </div>
+            </div>
+            <div class="color-strip">
+                <div class="strip-green"></div>
+                <div class="strip-orange"></div>
+                <div class="strip-yellow"></div>
+                <div class="strip-maroon"></div>
+            </div>
+        </div>
     </div>
 
     <div class="main-content">
