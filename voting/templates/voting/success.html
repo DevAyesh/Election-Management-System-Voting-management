@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Submitted - ඡන්දය ඉදිරිපත් කළා - வாக்கு சமர்ப்பிக்கப்பட்டது</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, #00b33c 0%, #008829 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .checkmark-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+        }
+
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: scaleIn 0.5s ease-out 0.3s both;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .checkmark svg {
+            width: 50px;
+            height: 50px;
+        }
+
+        .checkmark-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 0.8s ease-out 0.5s forwards;
+        }
+
+        @keyframes drawCheck {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .header-title {
+            position: relative;
+            z-index: 1;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .content-section {
+            padding: 40px 30px;
+        }
+
+        .message-block {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .message-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.4rem;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .message-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .message-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.1rem;
+            color: #718096;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+
+        .info-section {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            text-align: center;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .notice-box {
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+
+        .notice-text {
+            color: #742a2a;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .notice-text-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            margin-bottom: 5px;
+        }
+
+        .notice-text-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            margin-bottom: 5px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .footer-section {
+            background: #f7fafc;
+            padding: 20px 30px;
+            text-align: center;
+        }
+
+        .commission-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .emblem {
+            width: 40px;
+            height: auto;
+        }
+
+        .commission-text {
+            text-align: center;
+        }
+
+        .text-sinhala-small {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.9rem;
+            color: #4b0082;
+            font-weight: bold;
+        }
+
+        .text-tamil-small {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.8rem;
+            color: #4b0082;
+        }
+
+        .text-english-small {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            color: #4b0082;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .message-sinhala {
+                font-size: 1.2rem;
+            }
+
+            .message-tamil {
+                font-size: 1rem;
+            }
+
+            .message-english {
+                font-size: 0.95rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="success-container">
+        <div class="header-section">
+            <div class="checkmark-container">
+                <div class="checkmark">
+                    <svg viewBox="0 0 52 52">
+                        <circle cx="26" cy="26" r="25" fill="none" />
+                        <path class="checkmark-path" fill="none" stroke="#00b33c" stroke-width="4"
+                            stroke-linecap="round" d="M14 27l7 7 16-16" />
+                    </svg>
+                </div>
+            </div>
+            <div class="header-title">
+                ✓ සාර්ථකයි!
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="message-block">
+                <div class="message-sinhala">
+                    ඔබගේ ඡන්දය සාර්ථකව ඉදිරිපත් කර ඇත!
+                </div>
+                <div class="message-tamil">
+                    உங்கள் வாக்கு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!
+                </div>
+                <div class="message-english">
+                    Your vote has been successfully submitted!
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="notice-box">
+                <div class="notice-text notice-text-sinhala">
+                    📌 ඔබගේ ඡන්දය ආරක්ෂිතව සංකේතනය කර ගබඩා කර ඇත.
+                </div>
+                <div class="notice-text notice-text-tamil">
+                    📌 உங்கள் வாக்கு பாதுகாப்பாக குறியாக்கம் செய்யப்பட்டு சேமிக்கப்பட்டுள்ளது.
+                </div>
+                <div class="notice-text">
+                    📌 Your vote has been securely encrypted and stored.
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-section">
+            <div class="commission-info">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Emblem_of_Sri_Lanka.svg/240px-Emblem_of_Sri_Lanka.svg.png"
+                    alt="Emblem" class="emblem">
+                <div class="commission-text">
+                    <div class="text-sinhala-small">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil-small">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english-small">Election Commission of Sri Lanka</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

@@ -144,14 +144,16 @@
         /* Candidate Card */
         .card {
             background: white;
-            border-radius: 8px;
+            border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            padding: 10px;
+            padding: 0;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
             transition: transform 0.2s;
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
         }
 
         .card:hover {
@@ -160,15 +162,15 @@
         }
 
         .card-img-container {
-            width: 120px;
-            height: 90px;
-            background-color: #f0f0f0;
-            margin-bottom: 10px;
+            width: 100%;
+            height: 200px;
+            background-color: #b0b8c0;
+            margin-bottom: 0;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            border-radius: 4px;
+            border-radius: 0;
         }
 
         .card-img-container img {
@@ -184,18 +186,18 @@
 
         .card-name {
             width: 100%;
-            padding: 8px 5px;
+            padding: 12px 10px;
             color: white;
             font-weight: bold;
-            margin-bottom: 5px;
-            border-radius: 4px;
+            margin-bottom: 0;
+            border-radius: 0;
             box-sizing: border-box;
-            min-height: 50px;
+            min-height: 60px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 2px;
+            gap: 3px;
         }
 
         .name-sinhala {
@@ -215,33 +217,39 @@
         .card-party {
             font-size: 0.8rem;
             color: #555;
-            margin-bottom: 10px;
+            margin: 15px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 5px;
+            padding: 0 10px;
         }
 
         .party-symbol {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             object-fit: contain;
+            background-color: #f9f9f9;
+            border-radius: 50%;
+            padding: 8px;
         }
 
         .vote-buttons {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .vote-btn {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #800080;
+            width: 36px;
+            height: 36px;
+            border: 2px solid #d0d0d0;
             background: white;
-            color: #800080;
+            color: #333;
             font-weight: bold;
+            font-size: 1rem;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -249,7 +257,8 @@
         }
 
         .vote-btn:hover {
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
+            border-color: #b0b0b0;
         }
 
         .vote-btn.selected-1 {
@@ -356,13 +365,267 @@
         .btn-reset:hover {
             background-color: #e6c200;
         }
+
+        /* Success Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .success-modal {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 90%;
+            overflow: hidden;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #00b33c 0%, #008829 100%);
+            padding: 40px 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .checkmark-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 20px;
+        }
+
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+            }
+
+            to {
+                transform: scale(1);
+            }
+        }
+
+        .checkmark svg {
+            width: 50px;
+            height: 50px;
+        }
+
+        .checkmark-path {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: drawCheck 0.8s ease-out 0.3s forwards;
+        }
+
+        @keyframes drawCheck {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        .modal-title {
+            position: relative;
+            z-index: 1;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-content {
+            padding: 40px 30px;
+        }
+
+        .success-message {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .msg-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.4rem;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .msg-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .msg-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.1rem;
+            color: #718096;
+            font-weight: 500;
+            line-height: 1.6;
+        }
+
+        .modal-divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, #e2e8f0, transparent);
+            margin: 30px 0;
+        }
+
+        .security-notice {
+            background: #fff5f5;
+            border-left: 4px solid #fc8181;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .notice-line {
+            color: #742a2a;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 5px;
+        }
+
+        .notice-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .notice-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+        }
+
+        .notice-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+        }
+
+        .close-modal-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .close-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Warning Modal Styles */
+        .warning-modal .modal-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .warning-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: scaleIn 0.5s ease-out;
+            font-size: 3rem;
+        }
+
+        .warning-modal .modal-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+        }
+
+        .warning-modal .close-modal-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .warning-modal .close-modal-btn:hover {
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
+        }
     </style>
 </head>
 
 <body>
 
     <div class="top-bar">
-        <a href="/" class="home-icon">🏠</a>
+        <span class="home-icon">🏠</span>
         <div class="page-title">ජනාධිපතිවරණය - 2030</div>
     </div>
 
@@ -555,7 +818,7 @@
         function confirmVote() {
             // Check if at least one preference is selected
             if (!preferences[1] && !preferences[2] && !preferences[3]) {
-                alert("Please select at least one preference.");
+                showWarningModal();
                 return;
             }
 
@@ -577,7 +840,9 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        alert('Vote Submitted Successfully!');
+                        // Show success modal
+                        showSuccessModal();
+                        // Reset preferences after showing modal
                         resetPreferences();
                     } else {
                         alert('Error: ' + data.message);
@@ -604,7 +869,137 @@
             }
             return cookieValue;
         }
+
+        // Modal control functions
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.add('show');
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.classList.remove('show');
+        }
+
+        // Close modal when clicking outside of it
+        document.addEventListener('click', function (event) {
+            const modal = document.getElementById('successModal');
+            if (event.target === modal) {
+                closeSuccessModal();
+            }
+
+            const warningModal = document.getElementById('warningModal');
+            if (event.target === warningModal) {
+                closeWarningModal();
+            }
+        });
+
+        // Warning modal control functions
+        function showWarningModal() {
+            const modal = document.getElementById('warningModal');
+            modal.classList.add('show');
+        }
+
+        function closeWarningModal() {
+            const modal = document.getElementById('warningModal');
+            modal.classList.remove('show');
+        }
     </script>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="success-modal">
+            <div class="modal-header">
+                <div class="checkmark-container">
+                    <div class="checkmark">
+                        <svg viewBox="0 0 52 52">
+                            <circle cx="26" cy="26" r="25" fill="none" />
+                            <path class="checkmark-path" fill="none" stroke="#00b33c" stroke-width="4"
+                                stroke-linecap="round" d="M14 27l7 7 16-16" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="modal-title">
+                    <div style="font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif; font-size: 2rem;">✓ සාර්ථකයි!
+                    </div>
+                    <div style="font-family: 'Latha', 'Nirmala UI', sans-serif; font-size: 1.3rem; margin-top: 5px;">
+                        வெற்றி!</div>
+                    <div style="font-family: 'Segoe UI', sans-serif; font-size: 1.2rem; margin-top: 5px;">Success!</div>
+                </div>
+            </div>
+
+            <div class="modal-content">
+                <div class="success-message">
+                    <div class="msg-sinhala">
+                        ඔබගේ ඡන්දය සාර්ථකව ඉදිරිපත් කර ඇත!
+                    </div>
+                    <div class="msg-tamil">
+                        உங்கள் வாக்கு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!
+                    </div>
+                    <div class="msg-english">
+                        Your vote has been successfully submitted!
+                    </div>
+                </div>
+
+                <div class="modal-divider"></div>
+
+                <div class="security-notice">
+                    <div class="notice-line notice-sinhala">
+                        📌 ඔබගේ ඡන්දය ආරක්ෂිතව සංකේතනය කර ගබඩා කර ඇත.
+                    </div>
+                    <div class="notice-line notice-tamil">
+                        📌 உங்கள் வாக்கு பாதுகாப்பாக குறியாக்கம் செய்யப்பட்டு சேமிக்கப்பட்டுள்ளது.
+                    </div>
+                    <div class="notice-line">
+                        📌 Your vote has been securely encrypted and stored.
+                    </div>
+                </div>
+
+                <button class="close-modal-btn" onclick="closeSuccessModal()">
+                    හරි • சரி • OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Modal -->
+    <div class="modal-overlay" id="warningModal">
+        <div class="success-modal warning-modal">
+            <div class="modal-header">
+                <div class="checkmark-container">
+                    <div class="warning-icon">
+                        ⚠️
+                    </div>
+                </div>
+                <div class="modal-title">
+                    <div style="font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif; font-size: 2rem;">අවධානය!</div>
+                    <div style="font-family: 'Latha', 'Nirmala UI', sans-serif; font-size: 1.3rem; margin-top: 5px;">
+                        கவனம்!</div>
+                    <div style="font-family: 'Segoe UI', sans-serif; font-size: 1.2rem; margin-top: 5px;">Attention!
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-content">
+                <div class="success-message">
+                    <div class="msg-sinhala">
+                        කරුණාකර අවම වශයෙන් එක් මනාපයක් තෝරන්න.
+                    </div>
+                    <div class="msg-tamil">
+                        குறைந்தபட்சம் ஒரு விருப்பத்தை தேர்ந்தெடுக்கவும்.
+                    </div>
+                    <div class="msg-english">
+                        Please select at least one preference.
+                    </div>
+                </div>
+
+                <button class="close-modal-btn" onclick="closeWarningModal()">
+                    හරි • சரி • OK
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>

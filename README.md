@@ -72,12 +72,16 @@ The project is configured to connect to a local MongoDB instance.
     ```powershell
     .\venv\Scripts\Activate.ps1
     ```
-2.  **Start MongoDB**: Ensure MongoDB Compass or the MongoDB service is running locally.
-3.  **Run Server**:
+2.  **Install Dependencies**:
+    ```powershell
+    pip install -r requirements.txt
+    ```
+3.  **Start MongoDB**: Ensure MongoDB Compass or the MongoDB service is running locally.
+4.  **Run Server**:
     ```powershell
     python manage.py runserver
     ```
-4.  **Access App**: 
+5.  **Access App**: 
     -   Registration: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
     -   Voting: [http://127.0.0.1:8000/voting/](http://127.0.0.1:8000/voting/)
     -   Results: [http://127.0.0.1:8000/voting/results/](http://127.0.0.1:8000/voting/results/)

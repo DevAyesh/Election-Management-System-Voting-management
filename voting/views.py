@@ -125,3 +125,7 @@ def results(request):
     results_data.sort(key=lambda x: x['total_1st'], reverse=True)
     
     return render(request, 'voting/results.html', {'results': results_data})
+
+def success(request):
+    """Display the trilingual vote submission success page"""
+    return render(request, 'voting/success.html')
