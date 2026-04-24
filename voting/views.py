@@ -115,7 +115,7 @@ def get_party_symbol(party_name):
     return normalized_aliases.get(normalized_name, None)
 
 @ensure_csrf_cookie
-@login_required
+
 def index(request):
     candidates_qs = Candidate.objects.all()
     candidates = []
@@ -166,10 +166,8 @@ def results(request):
     candidates_qs = Candidate.objects.all()
     results_data = []
     
-    # Fetch all votes once
     all_votes = Vote.objects.all()
     
-    # Decrypt votes
     decrypted_votes = []
     for vote in all_votes:
         try:
@@ -178,7 +176,6 @@ def results(request):
             decrypted_votes.append(prefs)
         except Exception as e:
             print(f"Error decrypting vote {vote.id}: {e}")
-            # Skip invalid/unencrypted votes (e.g. from before encryption was added)
             continue
     
     for candidate in candidates_qs:
@@ -186,17 +183,16 @@ def results(request):
         counts = {1: 0, 2: 0, 3: 0}
         
         for prefs in decrypted_votes:
-            # Check rank 1
+            
             if prefs.get('1') == c_id:
                 counts[1] += 1
-            # Check rank 2
+            
             if prefs.get('2') == c_id:
                 counts[2] += 1
-            # Check rank 3
+           
             if prefs.get('3') == c_id:
                 counts[3] += 1
                 
-        # Get party symbol URL
         symbol_filename = get_party_symbol(candidate.party_name)
         if symbol_filename:
             party_symbol_url = f"{settings.MEDIA_URL}party_symbols/{symbol_filename}"

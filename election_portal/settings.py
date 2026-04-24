@@ -88,7 +88,7 @@ from django_mongodb_backend import parse_uri
 
 # MongoDB as default database for all models (auth, candidates, voting)
 DATABASES = {
-    'default': parse_uri('mongodb://localhost:27017/election_portal_db'),
+    'default': parse_uri('mongodb+srv://user:123@cluster0.qdf1iz9.mongodb.net/election'),
 }
 
 

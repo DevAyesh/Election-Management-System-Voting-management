@@ -126,5 +126,8 @@ class Candidate(models.Model):
         # Let MongoDB backend auto-generate the ObjectId
         super().save(*args, **kwargs)
 
+    class Meta:
+        db_table = "candidates"
+
     def __str__(self):
         return f"{self.full_name} ({self.nomination_type})"
