@@ -35,18 +35,15 @@ ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if os.envi
 # Application definition
 
 INSTALLED_APPS = [
-    # MongoDB Backend
+    # MongoDB Backend - must be first
     'django_mongodb_backend',
     
-    # Django Contrib Apps
-    # NOTE: Admin, Auth, ContentTypes, Sessions, and Messages are disabled 
-    # because they conflict with the current MongoDB backend setup on Python 3.13.
-    # 'django.contrib.admin',
-    # 'django.contrib.auth',
-    # 'django.contrib.contenttypes',
-    # 'django.contrib.sessions',
-    # 'django.contrib.messages',
-    
+    # Django Contrib Apps - Auth enabled for login functionality
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
     
     # Local Apps
@@ -56,11 +53,11 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
-    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
@@ -74,8 +71,8 @@ TEMPLATES = [
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
-                # 'django.contrib.auth.context_processors.auth',
-                # 'django.contrib.messages.context_processors.messages',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
             ],
         },
     },
@@ -89,6 +86,7 @@ WSGI_APPLICATION = 'election_portal.wsgi.application'
 
 from django_mongodb_backend import parse_uri
 
+# MongoDB as default database for all models (auth, candidates, voting)
 DATABASES = {
     'default': {
         'ENGINE': 'django_mongodb_backend',
@@ -143,4 +141,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+# Using MongoDB ObjectIdAutoField for all models
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
+
+# Authentication Settings
+LOGIN_URL = '/voting/login/'
+LOGIN_REDIRECT_URL = '/voting/'
+LOGOUT_REDIRECT_URL = '/voting/login/'
+
