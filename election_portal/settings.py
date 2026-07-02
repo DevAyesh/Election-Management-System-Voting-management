@@ -59,7 +59,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Rate limiting for polling station logins
+    'voting.middleware.RateLimitMiddleware',
 ]
+
+# Rate limiting settings
+RATE_LIMIT_STATION_LOGIN  = 5    # max failed attempts before lockout
+RATE_LIMIT_WINDOW_SECONDS = 600  # lockout window in seconds (10 minutes)
 
 ROOT_URLCONF = 'election_portal.urls'
 
@@ -141,5 +147,4 @@ DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 # Authentication Settings
 LOGIN_URL = '/voting/login/'
 LOGIN_REDIRECT_URL = '/voting/'
-LOGOUT_REDIRECT_URL = '/voting/login/'
-
+LOGOUT_REDIRECT_URL = '/voting/login/'

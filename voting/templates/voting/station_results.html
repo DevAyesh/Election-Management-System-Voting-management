@@ -1,0 +1,524 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Results - Election Commission</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            background-color: white;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .home-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .page-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.35rem;
+            font-weight: bold;
+            color: black;
+        }
+
+        /* ── Election Commission Box ── */
+        .commission-container {
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            background-color: white;
+            position: fixed;
+            top: 48px; left: 0; right: 0;
+            z-index: 99;
+        }
+
+        .commission-box {
+            background-color: #e8e8e8;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 2500px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .commission-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            gap: 12px;
+        }
+
+        .emblem { width: 50px; height: auto; }
+
+        .text-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1rem; color: #4b0082; font-weight: bold;
+        }
+
+        .text-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.85rem; color: #4b0082; margin: 2px 0;
+        }
+
+        .text-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem; color: #4b0082; font-weight: bold;
+        }
+
+        /* ── Colour Strip ── */
+        .color-strip { display: flex; height: 6px; width: 100%; margin-top: 4px; }
+        .strip-green  { background-color: #005f56; flex: 1; }
+        .strip-orange { background-color: #e37e00; flex: 1; }
+        .strip-yellow { background-color: #ffc400; flex: 2; }
+        .strip-maroon { background-color: #781830; flex: 3; }
+
+        /* ── Station Strip ── */
+        .station-strip {
+            background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 20px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            position: fixed;
+            top: 155px; left: 0; right: 0;
+            z-index: 98;
+            box-shadow: 0 2px 6px rgba(120,24,48,0.25);
+        }
+
+        .station-strip a {
+            color: #ffc400;
+            text-decoration: none;
+            font-size: 0.78rem;
+            margin-left: 20px;
+            transition: opacity .2s;
+        }
+
+        .station-strip a:hover { opacity: .75; }
+
+        /* ── Main Content ── */
+        .main-content {
+            margin-top: 183px;
+            padding: 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── Results Header ── */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4b0082;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            font-size: 1rem;
+            color: #718096;
+            margin: 5px 0 0 0;
+        }
+
+        /* ── Stats Cards ── */
+        .stats-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 22px;
+            text-align: center;
+            min-width: 130px;
+            flex: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #781830;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        /* ── Results Table ── */
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+        }
+
+        .results-table { width: 100%; border-collapse: collapse; }
+
+        .results-table thead {
+            background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 100%);
+            border-bottom: 3px solid #781830;
+        }
+
+        .results-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: bold;
+            color: #4b0082;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .results-table th.text-center { text-align: center; }
+
+        .results-table tbody tr {
+            border-bottom: 1px solid #e8e8e8;
+            transition: background-color .2s;
+        }
+
+        .results-table tbody tr:hover { background-color: #f9f9f9; }
+        .results-table tbody tr:last-child { border-bottom: none; }
+
+        .results-table td { padding: 18px 20px; color: #2d3748; }
+
+        /* ── Candidate Cell ── */
+        .candidate-cell { display: flex; align-items: center; gap: 12px; }
+
+        .party-symbol-result {
+            width: 42px; height: 42px;
+            object-fit: contain;
+            background-color: #f9f9f9;
+            border-radius: 50%;
+            padding: 3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .candidate-color {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .candidate-name { font-weight: 600; font-size: 1rem; color: #1a202c; }
+
+        /* ── Party Badge ── */
+        .party-badge {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #4b0082;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #d1c4e9;
+            display: inline-block;
+        }
+
+        /* ── Vote Counts ── */
+        .vote-count { text-align: center; font-weight: bold; font-size: 1.15rem; }
+        .vote-count.first  { color: #800080; font-size: 1.4rem; }
+        .vote-count.second { color: #008000; }
+        .vote-count.third  { color: #800000; }
+
+        /* ── Progress Bar ── */
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .6s ease;
+        }
+
+        /* ── Empty State ── */
+        .empty-state { text-align: center; padding: 60px 20px; color: #a0aec0; }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 15px; opacity: .5; }
+        .empty-state-text { font-size: 1.1rem; font-weight: 500; }
+
+        /* ── Footer Note ── */
+        .refresh-note {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            color: #718096;
+            font-size: 0.9rem;
+            border-left: 3px solid #4b0082;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+            transition: opacity .2s, transform .1s;
+        }
+
+        .btn:hover { opacity: .85; transform: translateY(-1px); }
+
+        .btn-ballot {
+            background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(120,24,48,.25);
+        }
+
+        .btn-logout {
+            background: white;
+            color: #781830;
+            border: 2px solid #781830;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .results-table th,
+            .results-table td { padding: 12px 10px; font-size: .85rem; }
+            .candidate-name { font-size: .9rem; }
+            .vote-count { font-size: 1rem; }
+            .vote-count.first { font-size: 1.2rem; }
+            .results-title { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <a href="{% url 'voting_index' %}" class="home-icon">🏠</a>
+        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    </div>
+
+    <!-- Election Commission Box -->
+    <div class="commission-container">
+        <div class="commission-box">
+            <div class="commission-content">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Emblem" class="emblem">
+                <div class="text-content">
+                    <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english">Election Commission</div>
+                </div>
+            </div>
+            <div class="color-strip">
+                <div class="strip-green"></div>
+                <div class="strip-orange"></div>
+                <div class="strip-yellow"></div>
+                <div class="strip-maroon"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Station Strip -->
+    <div class="station-strip">
+        <span>🗳️ &nbsp;{{ station_name }} &nbsp;·&nbsp; Station Results</span>
+        <span>
+            <a href="{% url 'voting_index' %}">← Back to Ballot</a>
+            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">🔒 End Session</a>
+        </span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- Header -->
+        <div class="results-header">
+            <div>
+                <h1 class="results-title">ස්ථාන ප්‍රතිඵල</h1>
+                <p class="results-subtitle">
+                    Station Vote Count &nbsp;·&nbsp;
+                    <strong>{{ station_name }}</strong>
+                    &nbsp;·&nbsp; Total: <strong>{{ total_votes }}</strong> vote{{ total_votes|pluralize }}
+                </p>
+            </div>
+            <div class="action-btns">
+                <a href="{% url 'voting_index' %}" class="btn btn-ballot">🗳️ Back to Ballot</a>
+                <a href="{% url 'station_logout' %}" class="btn btn-logout">🔒 End Session</a>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-num">{{ total_votes }}</div>
+                <div class="stat-label">Total Votes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#800080">{{ first_count }}</div>
+                <div class="stat-label">1st Pref.</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#008000">{{ second_count }}</div>
+                <div class="stat-label">2nd Pref.</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#800000">{{ third_count }}</div>
+                <div class="stat-label">3rd Pref.</div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="results-container">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Candidate &bull; අපේක්ෂකයා</th>
+                        <th>Party &bull; පක්ෂය</th>
+                        <th class="text-center">1st Pref. &bull; පළමු</th>
+                        <th class="text-center">2nd Pref. &bull; දෙවන</th>
+                        <th class="text-center">3rd Pref. &bull; තෙවන</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td>
+                            <div class="candidate-cell">
+                                {% if row.party_symbol_url %}
+                                <img src="{{ row.party_symbol_url }}" alt="{{ row.party }} symbol" class="party-symbol-result">
+                                {% endif %}
+                                <span class="candidate-color" style="background-color: {{ row.color }};"></span>
+                                <span class="candidate-name">{{ row.name }}</span>
+                            </div>
+                        </td>
+                        <td><span class="party-badge">{{ row.party }}</span></td>
+                        <td class="vote-count first">
+                            {{ row.counts.1 }}
+                            {% if total_votes > 0 %}
+                            <div class="progress-wrap">
+                                <div class="progress-bar">
+                                    <div class="progress-fill"
+                                        style="width:{% widthratio row.counts.1 total_votes 100 %}%;background:#800080;"></div>
+                                </div>
+                                <span style="font-size:.65rem;font-weight:400;color:#718096;min-width:28px">
+                                    {% widthratio row.counts.1 total_votes 100 %}%
+                                </span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="vote-count second">{{ row.counts.2 }}</td>
+                        <td class="vote-count third">{{ row.counts.3 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <div class="empty-state-text">
+                                    මෙම ස්ථානයෙන් තවමත් ඡන්ද වාර්තා වී නැත<br>
+                                    No votes recorded for this station yet
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Refresh Note -->
+        <div class="refresh-note">
+            🔄 පිටුව සෑම තත්පර 30කට වරක් ස්වයංක්‍රීයව නැවුම් වේ &bull;
+            Page refreshes automatically every 30 seconds
+        </div>
+
+    </div>
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(function () { location.reload(); }, 30000);
+
+        // Live clock
+        function updateTimestamp() {
+            const now = new Date();
+            const t = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const el = document.getElementById('clock');
+            if (el) el.textContent = t;
+        }
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp();
+    </script>
+
+</body>
+</html>

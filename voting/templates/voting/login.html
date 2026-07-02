@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Election Commission - Login</title>
+    <title>Election Commission - Unified Login</title>
     <style>
         * {
             margin: 0;
@@ -34,18 +34,11 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-30px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Header Section */
+        /* ── Header ── */
         .login-header {
             background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 100%);
             padding: 30px 25px 20px;
@@ -94,91 +87,68 @@
             font-weight: 600;
         }
 
-        /* Color Bar */
+        /* ── Colour Strip ── */
         .color-strip {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             display: flex;
             height: 6px;
         }
+        .strip-green  { background-color: #005f56; flex: 1; }
+        .strip-orange { background-color: #e37e00; flex: 1; }
+        .strip-yellow { background-color: #ffc400; flex: 2; }
+        .strip-maroon { background-color: #781830; flex: 3; }
 
-        .strip-green {
-            background-color: #005f56;
+        /* ── Tabs ── */
+        .tabs-container {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab {
             flex: 1;
+            text-align: center;
+            padding: 15px 10px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
         }
 
-        .strip-orange {
-            background-color: #e37e00;
-            flex: 1;
+        .tab:hover { background: #eee; }
+
+        .tab.active {
+            color: #781830;
+            border-bottom-color: #781830;
+            background: white;
         }
 
-        .strip-yellow {
-            background-color: #ffc400;
-            flex: 2;
-        }
-
-        .strip-maroon {
-            background-color: #781830;
-            flex: 3;
-        }
-
-        /* Login Form */
+        /* ── Body ── */
         .login-body {
-            padding: 40px 35px;
+            padding: 30px 35px;
         }
 
         .login-title {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .login-title h2 {
             font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
             color: #781830;
-            font-size: 1.5rem;
-            margin-bottom: 5px;
+            font-size: 1.4rem;
+            margin-bottom: 4px;
         }
 
         .login-title p {
             color: #666;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
         }
 
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #781830;
-            box-shadow: 0 0 0 3px rgba(120, 24, 48, 0.1);
-        }
-
-        .form-input::placeholder {
-            color: #999;
-        }
-
-        /* Error Messages */
+        /* ── Messages ── */
         .error-message {
             background: #fee;
             color: #c00;
@@ -189,17 +159,6 @@
             font-size: 0.9rem;
         }
 
-        .error-list {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .error-list li {
-            margin-bottom: 5px;
-        }
-
-        /* Success Messages */
         .success-message {
             background: #e8f5e9;
             color: #2e7d32;
@@ -210,7 +169,77 @@
             font-size: 0.9rem;
         }
 
-        /* Submit Button */
+        .warning-message {
+            background: #fff8e1;
+            color: #e65100;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #e65100;
+            font-size: 0.9rem;
+        }
+
+        /* ── Form ── */
+        .form-section { display: none; }
+        .form-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .form-group { margin-bottom: 24px; }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-label .icon {
+            color: #781830;
+            margin-right: 5px;
+        }
+
+        .input-wrap { position: relative; }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 46px 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-input.mono { font-family: 'Courier New', monospace; letter-spacing: 0.04em; }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #781830;
+            box-shadow: 0 0 0 3px rgba(120, 24, 48, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #aaa;
+            font-family: 'Segoe UI', sans-serif;
+            letter-spacing: 0;
+        }
+
+        .toggle-vis {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #999;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .toggle-vis:hover { color: #781830; }
+
+        /* ── Submit ── */
         .btn-login {
             width: 100%;
             padding: 16px;
@@ -230,62 +259,41 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(120, 24, 48, 0.4);
         }
+        .btn-login:active   { transform: translateY(0); }
+        .btn-login.loading  { opacity: 0.7; cursor: wait; transform: none; }
 
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        /* Footer */
+        /* ── Footer ── */
         .login-footer {
             text-align: center;
-            margin-top: 25px;
-            padding-top: 25px;
+            margin-top: 24px;
+            padding-top: 24px;
             border-top: 1px solid #e0e0e0;
         }
 
         .footer-text {
             color: #666;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             line-height: 1.6;
         }
 
-        .footer-icon {
-            color: #781830;
-            margin-right: 5px;
-        }
+        .footer-icon { color: #781830; margin-right: 4px; }
 
-        /* Responsive */
+        /* ── Responsive ── */
         @media (max-width: 600px) {
-            .login-container {
-                margin: 10px;
-            }
-
-            .login-body {
-                padding: 30px 25px;
-            }
-
-            .emblem {
-                width: 50px;
-            }
-
-            .text-sinhala {
-                font-size: 1rem;
-            }
-
-            .text-tamil {
-                font-size: 0.9rem;
-            }
+            .login-body { padding: 28px 20px 24px; }
+            .emblem { width: 48px; }
+            .text-sinhala { font-size: 1rem; }
         }
     </style>
 </head>
 
 <body>
     <div class="login-container">
-        <!-- Header with Election Commission Branding -->
+
+        <!-- Election Commission Header -->
         <div class="login-header">
             <div class="header-content">
-                <img src="{% static 'voting/images/emblem.svg' %}"
-                    alt="Emblem" class="emblem">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Emblem" class="emblem">
                 <div class="header-text">
                     <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
                     <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
@@ -300,82 +308,153 @@
             </div>
         </div>
 
-        <!-- Login Form -->
-        <div class="login-body">
-            <div class="login-title">
-                <h2>ඇතුල් වන්න</h2>
-                <p>Voting System Login</p>
+        <!-- Role Tabs -->
+        <div class="tabs-container">
+            <div class="tab {% if active_tab == 'station' or not active_tab %}active{% endif %}" onclick="switchTab('station')">
+                🗳️ Polling Station
             </div>
-
-            {% if messages %}
-            {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}error-message{% else %}success-message{% endif %}">
-                {{ message }}
-            </div>
-            {% endfor %}
-            {% endif %}
-
-            {% if form.non_field_errors %}
-            <div class="error-message">
-                <ul class="error-list">
-                    {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-
-            <form method="post" action="{% url 'login' %}">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    <label for="id_username" class="form-label">
-                        <span class="footer-icon">👤</span> Username / පරිශීලක නාමය
-                    </label>
-                    <input type="text" name="username" id="id_username" class="form-input"
-                        placeholder="Enter your username" required autofocus>
-                    {% if form.username.errors %}
-                    <div class="error-message">
-                        {% for error in form.username.errors %}
-                        {{ error }}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="form-group">
-                    <label for="id_password" class="form-label">
-                        <span class="footer-icon">🔒</span> Password / මුරපදය
-                    </label>
-                    <input type="password" name="password" id="id_password" class="form-input"
-                        placeholder="Enter your password" required>
-                    {% if form.password.errors %}
-                    <div class="error-message">
-                        {% for error in form.password.errors %}
-                        {{ error }}
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <input type="hidden" name="next" value="{{ next }}">
-
-                <button type="submit" class="btn-login">
-                    පිවිසෙන්න / Login
-                </button>
-            </form>
-
-            <div class="login-footer">
-                <div class="footer-text">
-                    <span class="footer-icon">🔒</span>
-                    Secure authentication for authorized personnel only
-                </div>
-                <div class="footer-text" style="margin-top: 8px;">
-                    හිමිකාරීත්වය සහිත පුද්ගලයන් සඳහා පමණි
-                </div>
+            <div class="tab {% if active_tab == 'admin' %}active{% endif %}" onclick="switchTab('admin')">
+                📊 Results Admin
             </div>
         </div>
-    </div>
-</body>
 
+        <div class="login-body">
+            
+            <!-- Django Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="
+                        {% if message.tags == 'error' %}error-message
+                        {% elif message.tags == 'success' %}success-message
+                        {% else %}warning-message{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- STATION LOGIN FORM -->
+            <div id="station-form" class="form-section {% if active_tab == 'station' or not active_tab %}active{% endif %}">
+                <div class="login-title">
+                    <h2>ආරක්ෂිත ස්ථාන යතුර</h2>
+                    <p>Enter your unique station key to unlock the voting terminal</p>
+                </div>
+
+                <form method="post" action="{% url 'station_login' %}" autocomplete="off" onsubmit="setLoading(this)">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="login_key" class="form-label">
+                            <span class="icon">🔑</span>Station Login Key / ස්ථාන ප්‍රවේශ යතුර
+                        </label>
+                        <div class="input-wrap">
+                            <input type="password" id="login_key" name="login_key" class="form-input mono"
+                                placeholder="Enter your unique station key" required autofocus autocomplete="new-password">
+                            <button type="button" class="toggle-vis" onclick="togglePassword('login_key', this)" title="Show / Hide">👁</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-login">
+                        🔓 ඡන්ද ස්ථානය ඇරීම / Unlock Voting Terminal
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <div class="footer-text">
+                        <span class="footer-icon">🔒</span> Each polling station has a unique key — station-specific access only
+                    </div>
+                    <div class="footer-text" style="margin-top: 6px;">
+                        ස්ථානයේ ප්‍රවේශ යතුර අනෙකුත් ස්ථාන සඳහා ක්‍රියා නොකරයි
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADMIN LOGIN FORM -->
+            <div id="admin-form" class="form-section {% if active_tab == 'admin' %}active{% endif %}">
+                <div class="login-title">
+                    <h2>පරිපාලක පිවිසුම</h2>
+                    <p>Global Results & Admin Access</p>
+                </div>
+
+                <form method="post" action="{% url 'login' %}" onsubmit="setLoading(this)">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_username" class="form-label">
+                            <span class="icon">👤</span>Username / පරිශීලක නාමය
+                        </label>
+                        <input type="text" name="username" id="id_username" class="form-input"
+                            placeholder="Enter admin username" required {% if active_tab == 'admin' %}autofocus{% endif %}>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_password" class="form-label">
+                            <span class="icon">🔒</span>Password / මුරපදය
+                        </label>
+                        <div class="input-wrap">
+                            <input type="password" name="password" id="id_password" class="form-input"
+                                placeholder="Enter admin password" required>
+                            <button type="button" class="toggle-vis" onclick="togglePassword('id_password', this)" title="Show / Hide">👁</button>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="next" value="{{ next }}">
+
+                    <button type="submit" class="btn-login">
+                        පිවිසෙන්න / Secure Login
+                    </button>
+                </form>
+
+                <div class="login-footer">
+                    <div class="footer-text">
+                        <span class="footer-icon">🔒</span> Secure authentication for authorized personnel only
+                    </div>
+                    <div class="footer-text" style="margin-top: 6px;">
+                        හිමිකාරීත්වය සහිත පුද්ගලයන් සඳහා පමණි
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabId) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            // Update forms
+            document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+            const targetForm = document.getElementById(tabId + '-form');
+            targetForm.classList.add('active');
+            
+            // Focus appropriate input
+            if(tabId === 'station') {
+                document.getElementById('login_key').focus();
+                // Update URL history state without reloading
+                window.history.replaceState({}, '', '{% url "station_login" %}');
+            } else {
+                document.getElementById('id_username').focus();
+                window.history.replaceState({}, '', '{% url "login" %}');
+            }
+        }
+
+        // Toggle password visibility
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🔒';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁';
+            }
+        }
+
+        // Loading state on submit
+        function setLoading(form) {
+            const btn = form.querySelector('button[type="submit"]');
+            btn.classList.add('loading');
+            btn.textContent = 'Authenticating…';
+        }
+    </script>
+</body>
 </html>

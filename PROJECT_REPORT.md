@@ -1,270 +1,274 @@
 # Project Report: Secure Voting and Results Module
 
-**Project Type:** Product-based (Application Development)
+**Project Type:** Product-based (Application Development)  
+**Last Updated:** 2026-07-02  
+
+---
 
 ## 1. Problem Definition
 
 The traditional paper-based voting system, while established, suffers from several critical inefficiencies and vulnerabilities that hinder the democratic process in the modern era. Key identifiable problems include:
 
-*   **Delayed Result Processing:** Manual counting of preferential votes is an incredibly time-consuming process. In elections with multiple rounds of counting (for 2nd and 3rd preferences), this latency increases significantly, leading to uncertainty and long waiting periods for the final result.
-*   **High Rates of Rejected Ballots:** Intricate voting rules (e.g., marking preferences correctly) often confuse voters, resulting in a high percentage of spoiled or invalid votes due to unintentional errors (e.g., over-voting or unclear marks).
-*   **Security & Integrity Concerns:** Physical ballot boxes can be susceptible to tampering, theft, or damage during transport. Furthermore, ensuring the confidentiality of the vote while verifying the voter's identity is a complex challenge in manual systems.
-*   **Data Aggregation Complexity:** Aggregating results from scattered polling divisions to a national center is prone to data entry errors and communication delays.
+* **Delayed Result Processing:** Manual counting of preferential votes is an incredibly time-consuming process. In elections with multiple rounds of counting (for 2nd and 3rd preferences), this latency increases significantly.
+* **High Rates of Rejected Ballots:** Intricate voting rules often confuse voters, resulting in a high percentage of spoiled or invalid votes due to unintentional errors.
+* **Security & Integrity Concerns:** Physical ballot boxes can be susceptible to tampering, theft, or damage. Ensuring confidentiality while verifying voter identity is complex in manual systems.
+* **No Geographic Segregation:** Traditional digital systems aggregate all votes into one database, making it impossible to audit results per polling station without manual cross-referencing.
+* **No Audit Trail:** Manual systems lack a tamper-evident log of all actions performed during the voting session.
 
-**Proposed Solution:**
-The objective of this project module is to develop a robust **Secure Digital Voting and Results System** that mitigates these issues. The solution focuses on automating the voting lifecycle while ensuring:
-- **Security:** Voter choices must be confidential (encrypted) and tamper-proof.
-- **Integrity:** Results must be accurately aggregated from valid votes, eliminating spoiled ballots via UI validation.
-- **Usability:** A clear, intuitive interface for voters to select their preferred candidates (1st, 2nd, and 3rd preferences) and for stakeholders to view real-time, accurate election results.
+**Proposed Solution:**  
+A **Secure Digital Voting System** with per-polling-station authentication, encrypted vote storage, rate limiting, and an immutable audit log.
+
+---
 
 ## 2. Key Features
-- **Secure Vote Submission:** User preferences are encrypted using Fernet symmetric encryption before being stored in the database, ensuring that individual vote data remains confidential even at the database level.
-- **Preferential Voting System:** The system supports a ranked-choice voting method where valid voters can cast 1st, 2nd, and 3rd preferences for candidates.
-- **Real-time Result Aggregation:** The results module dynamically fetches, decrypts, and aggregates votes to calculate current standings instantly.
-- **Dynamic Candidate Management:** Candidate metadata (Party colors, symbols) is dynamically mapped to ensure the UI is always up-to-date with the Election Commission's data.
+
+| Feature | Description |
+|---|---|
+| **Per-Station Admin Login** | Each of Sri Lanka's 160 polling divisions has a unique cryptographic login key. Polling masters sign in once at session start (7 AM); the terminal stays active all day. |
+| **Encrypted Vote Storage** | Fernet symmetric encryption — raw vote data is never stored in plain text, even in the database. |
+| **Station-Scoped Votes** | Every vote record is tagged with the originating polling station and district code. |
+| **Station Results View** | After voting ends, the polling master can view only their station's results — no re-authentication needed. |
+| **Global Results Dashboard** | Super-admin sees all votes aggregated nationally with a per-station breakdown. |
+| **Rate Limiting** | 5 failed station key attempts per IP per 10 minutes → automatic lockout. No Redis required. |
+| **Audit Log** | Every event (login, vote cast, logout, rate-limit hit, voter ID changes) recorded to an immutable MongoDB collection. |
+| **Temporary Voter ID UI** | Stub voter ID management (create, bulk import, list, delete) for POC testing — will connect to the real ID system. |
+| **Preferential Voting** | 1st, 2nd, and 3rd preference support with real-time aggregation. |
+
+---
 
 ## 3. User Interfaces
 
-### 3.1 Secure Authentication Interface
-Access to the voting system is restricted to authorized personnel. The login interface facilitates secure authentication, ensuring that only eligible voters with valid credentials can access the electronic ballot.
+### 3.1 Polling Station Login (`station_login.html`)
 
-![Voting System Login](voting_login_screen.png)
-*Figure 4: Secure Login Interface asking for Username and Password.*
+The polling master authentication interface. A single unique login key field unlocks the terminal for the entire voting session.
 
-### 3.2 Voting Dashboard (`index.html`)
-The voting dashboard serves as the primary interface for the electorate. Key UI elements include:
-- **Candidate Cards:** visually distinct cards for each candidate displaying their name, party name, and party symbol.
-- **Interactive Ballot:** A drag-and-drop or selection-based interface allowing users to rank their top 3 candidates.
-- **Visual Feedback:** Party-specific color coding (e.g., Purple for NPP, Maroon for SLPP, Green for UNP) to aid quick recognition.
+- Dark glassmorphism design with floating gold particles
+- Password visibility toggle
+- Rate-limited: 5 failed attempts → 10-minute IP lockout
+- Redirects to ballot immediately on success
 
-### 3.2 Results Dashboard (`results.html`)
-The results dashboard provides transparency into the election process.
-- **Live Counters:** displays the total count of 1st, 2nd, and 3rd preferences for each candidate.
-- **Sorted Rankings:** Automatically orders candidates based on the 1st preference count to show the current leader.
-- **Visual Analytics:** Uses party symbols and colors to present data in an engaging and readable format.
+### 3.2 Voting Ballot (`index.html`)
 
-### 3.3 Vote Validation Mechanism
-To minimize the rate of rejected votes—a common issue in manual systems—the digital platform enforces strict validation rules at the client side.
+The primary voter-facing interface. **Blocked if no station session is active.**
 
-![Vote Validation Popup](voting_validation_popup.png)
-*Figure 2: Trilingual validation modal attempting to submit an empty ballot.*
+- Dynamic candidate cards with party colour coding and symbols
+- Interactive 1st / 2nd / 3rd preference selection
+- Trilingual (Sinhala / Tamil / English) validation
+- One submission per session (prevents double voting)
 
-**Description:**
-The screenshot above illustrates the system's real-time error handling. If a voter attempts to cast a vote without selecting a valid preference (Minimum 1), a modal popup interrupts the process. This popup delivers a clear warning in Sinhala, Tamil, and English, ensuring the voter understands the requirement. This mechanism effectively eliminates the possibility of unintentional "blank vote" submissions, directly contributing to a higher count of valid ballots.
+### 3.3 Station Results (`station_results.html`)
 
-### 3.4 Submission Confirmation
-Upon successful processing of the vote, the system provides immediate visual feedback to the user.
+Post-voting read-only view accessible to the polling master using the same day session.
 
-![Vote Success Popup](vote_success_popup.png)
-*Figure 3: Success modal confirming the secure submission of the ballot.*
+- Shows only votes from that polling station
+- Preference breakdown per candidate with progress bars
+- Printable layout
 
-**Description:**
-This interface appears only after the server has successfully received, validated, and persisted the vote. Crucially, it includes a specific security notice (indicated by the lock icon) informing the voter that their ballot has been **"securely encrypted and stored."** This transparency builds trust in the digital system, reassuring voters that their privacy is protected.
+### 3.4 Global Results (`results.html`)
 
-## 4. Overall Architectural Diagram
-The system follows a typical Model-View-Controller (MVC) pattern, implemented via Django (MVT).
+Super-admin view showing national results plus per-station breakdown.
+
+- Live preference counts (1st / 2nd / 3rd)
+- Sorted by 1st preference count
+- Station-level drill-down
+
+### 3.5 Voter ID Management (`voter_id_list.html` etc.)
+
+Stub system for POC testing — will be replaced by the real external ID system.
+
+- List with search and filter by district, division, voted status
+- Single create form with dynamic district → division cascade
+- Bulk CSV import with live line counter
+- Delete with confirmation + audit log entry
+
+---
+
+## 4. System Architecture
 
 ```mermaid
 graph TD
-    User((Voter)) -->|Access & Login| UI[Web Browser]
-    UI -->|Submit Vote JSON| View[Django Views Layer]
-    
-    subgraph "Voting Module"
-        View -->|Validate Data| Logic[Business Logic]
-        Logic -->|Encrypt Preferences| Sec["Encryption Service (Fernet)"]
-        Sec -->|Encrypted String| DB[("MongoDB Database")]
+    PM((Polling Master)) -->|Unique Station Key| SL[Station Login]
+    SL -->|Session Unlock| BL[Ballot Interface]
+
+    Voter((Voter)) -->|1st/2nd/3rd Pref| BL
+    BL -->|POST JSON| SV[submit_vote view]
+
+    subgraph "Security Layer"
+        SV -->|Encrypt with Fernet| ENC[Encryption Service]
+        SV -->|Rate Check| RL[Rate Limit Middleware]
+        SV -->|Log Event| AL[(AuditLog Collection)]
     end
-    
-    subgraph "Results Module"
-        Admin((Public/Admin)) -->|Request Results| UI_Result[Results Dashboard]
-        UI_Result -->|Get Request| ResView[Results View]
-        ResView -->|Fetch Encrypted Votes| DB
-        DB -->|Raw Data| ResView
-        ResView -->|Decrypt Data| Sec
-        ResView -->|Aggregate Counts| Ag[Aggregation Engine]
-        Ag -->|Sorted Data| UI_Result
-    end
+
+    ENC -->|Encrypted blob + station tag| DB[(MongoDB — vote collection)]
+
+    Admin((Super Admin)) -->|Login| RV[Results View]
+    RV -->|Fetch all votes| DB
+    RV -->|Decrypt + Aggregate| AG[Aggregation Engine]
+    AG -->|National + Per-Station| RD[Results Dashboard]
+
+    PM -->|Same session| SR[Station Results View]
+    SR -->|Fetch station votes only| DB
 ```
 
-## 5. Core Functionality Demonstration (Sample Code)
+---
 
-This section highlights the critical backend logic that powers the system's security and data processing capabilities.
+## 5. Data Models
 
-### 5.1 Vote Encryption & Submission
-This function handles the secure submission of votes. It receives the voter's preferences as a JSON object. Before saving to the database, it utilizes the **Fernet symmetric encryption** scheme to encrypt the vote data. This ensures that raw voter preferences are never stored in plain text, protecting voter privacy even if the database is accessed directly.
+### 5.1 `PollingStation`
 
-**File:** `voting/views.py`
 ```python
-@login_required
-def submit_vote(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            preferences = data.get('preferences', {})
-            
-            # 1. Encrypt Preferences for Privacy
-            # We use Fernet (symmetric encryption) to protect the vote data
-            json_str = json.dumps(preferences)
-            encrypted_data = cipher_suite.encrypt(json_str.encode()).decode()
-            
-            # 2. Create Vote Record
-            Vote.objects.create(preferences=encrypted_data)
-            
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+class PollingStation(models.Model):
+    id              = ObjectIdAutoField(primary_key=True)
+    district_number = models.IntegerField()          # 01–22
+    district_name   = models.CharField(max_length=100)
+    division_code   = models.CharField(max_length=5)  # e.g. "J"
+    division_name   = models.CharField(max_length=100) # e.g. "Kaduwela"
+    login_key       = models.CharField(max_length=64, unique=True)  # secrets.token_urlsafe(32)
+    is_active       = models.BooleanField(default=True)
+    created_at      = models.DateTimeField(auto_now_add=True)
 ```
 
-### 5.2 Result Decryption & Aggregation
-The results view is responsible for tabulating the election outcome in real-time. Since votes are stored encrypted, this function must first decrypt every vote record. It then iterates through the decrypted preferences to aggregate counts for 1st, 2nd, and 3rd choices for each candidate, finally sorting them to determine the leading candidates.
+### 5.2 `Vote`
 
-**File:** `voting/views.py`
-```python
-def results(request):
-    candidates_qs = Candidate.objects.all()
-    all_votes = Vote.objects.all()
-    
-    decrypted_votes = []
-    
-    # 1. Decrypt all votes
-    for vote in all_votes:
-        try:
-            decrypted_data = cipher_suite.decrypt(vote.preferences.encode()).decode()
-            prefs = json.loads(decrypted_data)
-            decrypted_votes.append(prefs)
-        except Exception:
-            continue # Skip invalid votes
-            
-    results_data = []
-    
-    # 2. Aggregate counts per candidate
-    for candidate in candidates_qs:
-        c_id = str(candidate.id)
-        counts = {1: 0, 2: 0, 3: 0}
-        
-        for prefs in decrypted_votes:
-            # Check matches for each rank
-            if prefs.get('1') == c_id: counts[1] += 1
-            if prefs.get('2') == c_id: counts[2] += 1
-            if prefs.get('3') == c_id: counts[3] += 1
-                
-        results_data.append({
-            'name': candidate.ballot_name,
-            'counts': counts,
-            'total_1st': counts[1]  # Used for sorting
-        })
-    
-    # 3. Sort by leading candidate (1st Preference)
-    results_data.sort(key=lambda x: x['total_1st'], reverse=True)
-    
-    return render(request, 'voting/results.html', {'results': results_data})
-```
-
-### 5.3 Data Model
-The `Vote` model is designed to be minimal to maintain anonymity and security. It avoids linking the vote directly to a specific user identity in the schema (session-based constraints are handled separately) and stores the preferences solely as an encrypted text field.
-
-**File:** `voting/models.py`
 ```python
 class Vote(models.Model):
-    # Store preferences as an encrypted string rather than plain text
-    preferences = models.TextField() 
-    timestamp = models.DateTimeField(auto_now_add=True)
+    id              = ObjectIdAutoField(primary_key=True)
+    preferences     = models.TextField()            # Fernet-encrypted JSON
+    polling_station = models.CharField(max_length=200, null=True, blank=True)  # "Colombo / Kaduwela"
+    station_code    = models.CharField(max_length=20,  null=True, blank=True)  # "01-J"
+    voted_at        = models.DateTimeField(auto_now_add=True)
+```
 
-    class Meta:
-        db_table = 'vote'
+### 5.3 `TempVoterId`
 
-### 5.4 Candidate Data Structure
-The `Candidate` model is central to the election logic. It utilizes specific validators to enforce eligibility rules (e.g., minimum age of 35) and fields compatible with MongoDB's document structure.
-
-**File:** `candidates/models.py`
 ```python
-class Candidate(models.Model):
-    full_name = models.CharField(max_length=255)
-    party_name = models.CharField(max_length=20, choices=PARTY_CHOICES, blank=True, null=True)
-    date_of_birth = models.DateField(validators=[validate_age])
-    
-    # Validation logic to ensure candidate eligibility
-    def clean(self):
-        if self.nomination_type == 'PARTY' and not self.party_name:
-            raise ValidationError('Party selection is required.')
-            
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+class TempVoterId(models.Model):
+    id         = ObjectIdAutoField(primary_key=True)
+    voter_id   = models.CharField(max_length=20, unique=True)  # NIC
+    full_name  = models.CharField(max_length=200)
+    district   = models.CharField(max_length=100)
+    division   = models.CharField(max_length=100)
+    has_voted  = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 ```
 
-### 5.5 Dynamic Ballot Interface
-The voting interface dynamically renders candidate cards based on the database records. This HTML snippet demonstrates how the Django template iterates through the candidate list to generate the visual ballot papers, applying party-specific colors and symbols automatically.
+### 5.4 `AuditLog`
 
-**File:** `voting/templates/voting/index.html`
-```html
-<div class="candidate-row">
-    {% for candidate in candidates %}
-    <div class="card" id="card-{{ candidate.id }}" data-id="{{ candidate.id }}">
-        <!-- Dynamic Header Color based on Party -->
-        <div class="card-name" style="background-color: {{ candidate.color|default:'#666' }};">
-            <img src="{{ candidate.party_symbol_url }}" class="party-symbol" alt="Symbol">
-            <div class="name-text">
-                <span class="name-sinhala">{{ candidate.ballot_name }}</span>
-                <span class="name-english">{{ candidate.short_name }}</span>
-            </div>
-        </div>
-        
-        <!-- Voting Buttons -->
-        <div class="vote-buttons">
-            <button class="vote-btn" onclick="selectCandidate('{{ candidate.id }}', 1)">1</button>
-            <button class="vote-btn" onclick="selectCandidate('{{ candidate.id }}', 2)">2</button>
-            <button class="vote-btn" onclick="selectCandidate('{{ candidate.id }}', 3)">3</button>
-        </div>
-    </div>
-    {% endfor %}
-</div>
+```python
+class AuditLog(models.Model):
+    id           = ObjectIdAutoField(primary_key=True)
+    event_type   = models.CharField(max_length=20)   # STATION_LOGIN | VOTE_CAST | RATE_LIMITED | …
+    station_name = models.CharField(max_length=200, null=True, blank=True)
+    ip_address   = models.GenericIPAddressField(null=True, blank=True)
+    details      = models.TextField(blank=True)
+    timestamp    = models.DateTimeField(auto_now_add=True)
 ```
 
-## 6. Database Design and Implementation Details
-The system employs a **Non-Relational (NoSQL)** database strategy using **MongoDB**, chosen for its schema flexibility and ability to handle high-read/write throughput during election peaks.
+---
 
-### 6.1 Database Engine
-- **Engine:** `django-mongodb-backend`
-- **Reason:** This is a modern, community-supported backend that provides native compatibility between Django 5.x and MongoDB, supporting standard Django ORM operations while leveraging MongoDB's document structure.
-- **Connection:** `mongodb://localhost:27017/election_portal_db`
+## 6. Core Functionality
 
-### 6.2 Schema Design
-Unlike traditional SQL schemas, the data models are stored as JSON-like documents.
+### 6.1 Station Login & Session Isolation
 
-#### 6.2.1 Candidates Collection (`candidates_candidate`)
-Stores candidate profiles.
-- **Primary Key:** `_id` (ObjectId) - Automatically generated 12-byte unique identifier.
-- **Fields:**
-    - `full_name`: String
-    - `party_name`: String (e.g., "NPP", "SJB")
-    - `party_symbol_url`: String (Path to media file)
-    - `is_registered_voter`: Boolean (Eligibility check)
-    - `nomination_type`: String ("PARTY" or "INDEPENDENT")
+```python
+def station_login(request):
+    if request.method == 'POST':
+        login_key = request.POST.get('login_key', '').strip()
+        try:
+            station = PollingStation.objects.get(login_key=login_key, is_active=True)
+            # Establish day-long session
+            request.session['polling_station_id']   = str(station.id)
+            request.session['polling_station_name'] = str(station)
+            request.session['has_voted'] = False
+            request.session.save()
+            # Write audit event
+            AuditLog.objects.create(event_type='STATION_LOGIN', station_name=str(station), ...)
+            return redirect('voting_index')
+        except PollingStation.DoesNotExist:
+            AuditLog.objects.create(event_type='LOGIN_FAILED', ...)
+            messages.error(request, 'Invalid or inactive station key.')
+```
 
-#### 6.2.2 Votes Collection (`vote`)
-Stores the encrypted ballot data.
-- **Primary Key:** `_id` (ObjectId)
-- **Fields:**
-    - `preferences`: String (Encrypted Blob). Contains the JSON structure of user choices (1st, 2nd, 3rd) encrypted with Fernet.
-    - `timestamp`: DateTime. Records when the vote was cast for audit purposes.
-    - *Note:* User IDs are intentionally omitted from this schema to preserve ballot secrecy.
+### 6.2 Vote Submission with Station Tagging
 
-    **Evidence of Encryption:**
-    The following screenshot demonstrates how the vote preferences are stored in the MongoDB `vote` collection. Note that the `preferences` field is a long, opaque string (Fernet token), making it impossible to read the voter's choice without the specific encryption key.
+```python
+def submit_vote(request):
+    station_id   = request.session.get('polling_station_id')
+    station_name = request.session.get('polling_station_name')
 
-    ![Encrypted Vote Records](encrypted_votes_db.png)
-    *Figure 1: Snapshot of MongoDB 'vote' collection displaying 100% encrypted preference data.*
+    # Block if no station session
+    if not station_id:
+        return JsonResponse({'status': 'error', 'message': 'Station session not active.'}, status=403)
 
-### 6.3 Implementation Constraints
-- **ObjectIdAutoField:** All models utilize `django_mongodb_backend.fields.ObjectIdAutoField` as the `DEFAULT_AUTO_FIELD` to ensure primary keys are compatible with MongoDB's BSON numbering system.
-- **Session Handling:** Standard Django sessions were adapted to store `ObjectId` references as strings to prevent serialization errors common when mixing Django's relational assumptions with MongoDB's object types.
+    # Block double voting
+    if request.session.get('has_voted'):
+        return JsonResponse({'status': 'error', 'message': 'Already submitted.'}, status=429)
 
-## 7. Conclusion
-This project successfully demonstrates a modern, secure approach to digital voting by leveraging the robustness of Django and the flexibility of MongoDB. The system addresses critical deficiencies in traditional voting methods—specifically regarding result processing speed, vote validity, and data security—through:
+    # Encrypt and store with station tag
+    encrypted_data = cipher_suite.encrypt(json.dumps(preferences).encode()).decode()
+    Vote.objects.create(
+        preferences=encrypted_data,
+        polling_station=station_name,   # "Colombo / Kaduwela"
+        station_code=station_code,       # "01-J"
+    )
+    request.session['has_voted'] = True
+    AuditLog.objects.create(event_type='VOTE_CAST', station_name=station_name, ...)
+```
 
-1.  **End-to-End Encryption:** Ensuring voter intent is cryptographically protected from submission to aggregation.
-2.  **Scalable NoSQL Architecture:** Utilizing MongoDB to handle the dynamic and high-volume nature of election data.
-3.  **User-Centric Design:** Providing an intuitive, foolproof interface that minimizes rejected ballots and enhances the voter experience.
+### 6.3 Rate Limiting Middleware
 
-The implemented module stands as a functional proof-of-concept for a transparent, efficient, and tamper-evident election system.
+```python
+class RateLimitMiddleware:
+    MAX_ATTEMPTS   = 5    # configurable via settings.RATE_LIMIT_STATION_LOGIN
+    WINDOW_SECONDS = 600  # 10 minutes
+
+    def __call__(self, request):
+        if request.method == 'POST' and request.path == '/voting/station/login/':
+            ip = _get_client_ip(request)
+            if _is_rate_limited(ip, self.MAX_ATTEMPTS, self.WINDOW_SECONDS):
+                AuditLog.objects.create(event_type='RATE_LIMITED', ip_address=ip, ...)
+                return JsonResponse({'status': 'error', 'message': 'Too many attempts.'}, status=429)
+        return self.get_response(request)
+```
+
+---
+
+## 7. MongoDB Collections Summary
+
+| Collection | Key Fields | Notes |
+|---|---|---|
+| `polling_station` | `login_key` (unique), `district_number`, `division_code` | 160 entries seeded from Section 9(3) data |
+| `vote` | `preferences` (encrypted), `polling_station`, `station_code`, `voted_at` | All votes tagged to originating station |
+| `temp_voter_id` | `voter_id` (unique), `has_voted` | POC stub — replace with real ID system |
+| `audit_log` | `event_type`, `station_name`, `ip_address`, `timestamp` | Immutable; admin read-only |
+| `candidates_candidate` | `full_name`, `party_name`, `ballot_name` | Election candidates |
+
+---
+
+## 8. Sri Lanka Polling Division Reference
+
+Based on Section 9(3) of the Registration of Electors Act No. 44 of 1980:
+
+- **22 Electoral Districts**
+- **160 Polling Divisions** seeded with unique login keys
+- Each polling master receives a 43-character `secrets.token_urlsafe(32)` key specific to their division
+
+To regenerate all keys (e.g., after a security incident):
+```python
+# In Django admin → PollingStation → select all → "Regenerate login key"
+```
+
+---
+
+## 9. Conclusion
+
+This system addresses the original problem areas with the following implementations:
+
+1. **Geographic vote segregation** — every vote is tagged to its originating polling station, enabling per-division audits.
+2. **End-to-end encryption** — Fernet encryption ensures voter preferences remain confidential at rest.
+3. **Tamper-evident audit log** — every action is recorded; the log is read-only in the admin panel.
+4. **Rate limiting** — brute-force attacks on station keys are blocked at the middleware level.
+5. **Scalable NoSQL architecture** — MongoDB handles high-volume election-day writes with no schema bottleneck.
+6. **Temporary ID stub** — voter ID management is built as a pluggable module, ready to connect to the real ID verification system.
+
+The system stands as a functional proof-of-concept demonstrating a transparent, geographically isolated, and tamper-evident digital election infrastructure.

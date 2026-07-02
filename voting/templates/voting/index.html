@@ -921,7 +921,32 @@
         </div>
     </div>
 
-    <div class="main-scroll">
+    <!-- Polling Station Info Bar -->
+    {% if station_name %}
+    <div style="
+        background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 18px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        position: fixed;
+        top: 155px;
+        left: 0; right: 0;
+        z-index: 98;
+        box-shadow: 0 2px 6px rgba(120,24,48,0.25);
+    ">
+        <span>🗳️ &nbsp;{{ station_name }}</span>
+        <span style="display:flex;gap:16px;align-items:center;">
+            <a href="{% url 'station_results' %}" style="color:#ffc400;text-decoration:none;font-size:0.78rem;">📊 View Results</a>
+            <a href="{% url 'station_logout' %}"  style="color:#ffb0b0;text-decoration:none;font-size:0.78rem;">🔒 End Session</a>
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="main-scroll" style="{% if station_name %}top: 183px;{% endif %}">
         <div class="main-content">
             {% for candidate in candidates %}
             {% if forloop.counter0|divisibleby:4 %}
@@ -1123,7 +1148,8 @@
             }
 
             const payload = {
-                preferences: {}
+                preferences: {},
+                phone_number: '+94787570003'
             };
             if (preferences[1]) payload.preferences['1'] = preferences[1].id;
             if (preferences[2]) payload.preferences['2'] = preferences[2].id;
