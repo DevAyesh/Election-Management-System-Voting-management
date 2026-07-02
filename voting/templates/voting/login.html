@@ -313,8 +313,11 @@
             <div class="tab {% if active_tab == 'station' or not active_tab %}active{% endif %}" onclick="switchTab('station')">
                 🗳️ Polling Station
             </div>
+            <div class="tab {% if active_tab == 'results' %}active{% endif %}" onclick="switchTab('results')">
+                📈 Station Results
+            </div>
             <div class="tab {% if active_tab == 'admin' %}active{% endif %}" onclick="switchTab('admin')">
-                📊 Results Admin
+                📊 Global Admin
             </div>
         </div>
 
@@ -341,6 +344,7 @@
 
                 <form method="post" action="{% url 'station_login' %}" autocomplete="off" onsubmit="setLoading(this)">
                     {% csrf_token %}
+                    <input type="hidden" name="destination" value="voting">
                     <div class="form-group">
                         <label for="login_key" class="form-label">
                             <span class="icon">🔑</span>Station Login Key / ස්ථාන ප්‍රවේශ යතුර
@@ -362,6 +366,41 @@
                     </div>
                     <div class="footer-text" style="margin-top: 6px;">
                         ස්ථානයේ ප්‍රවේශ යතුර අනෙකුත් ස්ථාන සඳහා ක්‍රියා නොකරයි
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATION RESULTS FORM -->
+            <div id="results-form" class="form-section {% if active_tab == 'results' %}active{% endif %}">
+                <div class="login-title">
+                    <h2>ස්ථාන ප්‍රතිඵල</h2>
+                    <p>Enter your station key to view local results</p>
+                </div>
+
+                <form method="post" action="{% url 'station_login' %}" autocomplete="off" onsubmit="setLoading(this)">
+                    {% csrf_token %}
+                    <input type="hidden" name="destination" value="results">
+                    <div class="form-group">
+                        <label for="results_key" class="form-label">
+                            <span class="icon">🔑</span>Station Login Key / ස්ථාන ප්‍රවේශ යතුර
+                        </label>
+                        <div class="input-wrap">
+                            <input type="password" id="results_key" name="login_key" class="form-input mono"
+                                placeholder="Enter your unique station key" required autocomplete="new-password">
+                            <button type="button" class="toggle-vis" onclick="togglePassword('results_key', this)" title="Show / Hide">👁</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-login" style="background: linear-gradient(135deg, #005f56 0%, #00897b 100%);">
+                        📈 ප්‍රතිඵල පෙන්වන්න / View Results
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <div class="footer-text">
+                        <span class="footer-icon">🔒</span> View votes submitted exclusively from your station
+                    </div>
+                    <div class="footer-text" style="margin-top: 6px;">
+                        ඔබේ ස්ථානයෙන් පමණක් ලබාදුන් ඡන්ද බලන්න
                     </div>
                 </div>
             </div>

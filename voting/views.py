@@ -176,9 +176,15 @@ def index(request):
         candidates.append(c)
 
     station_name = request.session.get('polling_station_name', '')
+    
+    # Calculate expiry timestamp to pass to JS countdown
+    expiry_date = request.session.get_expiry_date()
+    expiry_timestamp = expiry_date.timestamp() * 1000  # Convert to milliseconds for JS
+
     return render(request, 'voting/index.html', {
         'candidates': candidates,
         'station_name': station_name,
+        'expiry_timestamp': expiry_timestamp,
     })
 
 
@@ -275,10 +281,14 @@ def station_login(request):
     The session then stays active for the entire day.
     """
     if request.session.get('polling_station_id'):
+        destination = request.GET.get('destination', 'voting')
+        if destination == 'results':
+            return redirect('station_results')
         return redirect('voting_index')
 
     if request.method == 'POST':
         login_key = request.POST.get('login_key', '').strip()
+        destination = request.POST.get('destination', 'voting')
 
         try:
             station = PollingStation.objects.get(login_key=login_key, is_active=True)
@@ -288,26 +298,35 @@ def station_login(request):
             request.session['polling_station_district'] = station.district_name
             request.session['polling_station_division'] = station.division_name
             request.session['vote_in_progress']         = False
+            
+            # Polling hours are 7 AM to 4 PM (9 hours). Expire the session exactly after 9 hours.
+            request.session.set_expiry(9 * 3600)
+            
             request.session.save()
 
             _write_audit(
                 AuditLog.EventType.STATION_LOGIN,
                 request=request,
                 station_name=str(station),
-                details=f"Station session started: {station.district_name} / {station.division_name}",
+                details=f"Station session started ({destination}): {station.district_name} / {station.division_name}",
             )
             messages.success(request, f'Station "{station}" logged in successfully.')
+            
+            if destination == 'results':
+                return redirect('station_results')
             return redirect('voting_index')
 
         except PollingStation.DoesNotExist:
             _write_audit(
                 AuditLog.EventType.LOGIN_FAILED,
                 request=request,
-                details=f"Invalid login key attempt: {login_key[:8]}***",
+                details=f"Invalid login key attempt ({destination}): {login_key[:8]}***",
             )
             messages.error(request, 'Invalid or inactive station key. Please try again.')
+            return render(request, 'voting/login.html', {'active_tab': destination})
 
-    return render(request, 'voting/login.html', {'active_tab': 'station'})
+    active_tab = request.GET.get('tab', 'station')
+    return render(request, 'voting/login.html', {'active_tab': active_tab})
 
 
 def station_logout(request):
