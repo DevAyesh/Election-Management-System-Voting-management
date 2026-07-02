@@ -4,6 +4,7 @@ from django.views.generic import CreateView, TemplateView
 from .models import Candidate
 from .forms import CandidateForm
 
+
 class CandidateCreateView(CreateView):
     """
     View to handle candidate registration.

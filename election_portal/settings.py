@@ -88,7 +88,13 @@ from django_mongodb_backend import parse_uri
 
 # MongoDB as default database for all models (auth, candidates, voting)
 DATABASES = {
-    'default': parse_uri('mongodb+srv://user:123@cluster0.qdf1iz9.mongodb.net/election'),
+    'default': {
+        'ENGINE': 'django_mongodb_backend',
+        'NAME': 'election_portal_db', # 💡 මෙහිදී ඔබේ database එකට නමක් දෙන්න. උදා: 'election_portal_db'
+        'CLIENT': {
+            'host': 'mongodb://localhost:27017/', # 💡 මෙය ඔබගේ Compass connection URL එකට සමාන විය යුතුය.
+        }
+    }
 }
 
 
