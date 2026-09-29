@@ -30,8 +30,8 @@ class Vote(models.Model):
     """A single encrypted ballot, tagged with the originating polling station."""
     id              = ObjectIdAutoField(primary_key=True)
     preferences     = models.TextField()                                  # Fernet-encrypted JSON
-    polling_station = models.CharField(max_length=200, null=True, blank=True)  # "Colombo / Kaduwela"
-    station_code    = models.CharField(max_length=20,  null=True, blank=True)  # "01-J"
+    polling_station = models.CharField(max_length=200, null=True, blank=True)  
+    station_code    = models.CharField(max_length=20,  null=True, blank=True)  
     voted_at        = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -44,7 +44,7 @@ class TempVoterId(models.Model):
     Will be replaced / connected to the real external ID system later.
     """
     id         = ObjectIdAutoField(primary_key=True)
-    voter_id   = models.CharField(max_length=20, unique=True)  # e.g. NIC number
+    voter_id   = models.CharField(max_length=20, unique=True)  
     full_name  = models.CharField(max_length=200)
     district   = models.CharField(max_length=100)
     division   = models.CharField(max_length=100)
