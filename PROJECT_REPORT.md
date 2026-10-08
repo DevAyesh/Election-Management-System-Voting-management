@@ -45,9 +45,20 @@ The polling master authentication interface. A single unique login key field unl
 - Dark glassmorphism design with floating gold particles
 - Password visibility toggle
 - Rate-limited: 5 failed attempts → 10-minute IP lockout
-- Redirects to ballot immediately on success
+- Redirects to Voter QR Verification Window on success
 
-### 3.2 Voting Ballot (`index.html`)
+### 3.2 Voter QR Verification Window (`qr_verification.html`)
+
+The voter authorization optical scanning terminal. Displays after polling station authentication to verify issued voter tokens before granting ballot access.
+
+- Official Election Commission branding, emblem, and national ribbon bar
+- Bilingual (Sinhala / English / Tamil) instructions and live optical telemetry
+- Real-time optical camera feed with interactive HUD overlay (target reticle, laser scanline, telemetry badges)
+- Autonomous hardware simulation fallback for systems without optical camera sensors
+- Camera switch, torch illumination, and Web Audio API synthesized verification feedback
+- Double-click rapid authorization workflow to unlock the voting ballot
+
+### 3.3 Voting Ballot (`index.html`)
 
 The primary voter-facing interface. **Blocked if no station session is active.**
 
@@ -55,8 +66,9 @@ The primary voter-facing interface. **Blocked if no station session is active.**
 - Interactive 1st / 2nd / 3rd preference selection
 - Trilingual (Sinhala / Tamil / English) validation
 - One submission per session (prevents double voting)
+- Automatically returns terminal to QR Verification Window after vote completion
 
-### 3.3 Station Results (`station_results.html`)
+### 3.4 Station Results (`station_results.html`)
 
 Post-voting read-only view accessible to the polling master using the same day session.
 
@@ -64,7 +76,7 @@ Post-voting read-only view accessible to the polling master using the same day s
 - Preference breakdown per candidate with progress bars
 - Printable layout
 
-### 3.4 Global Results (`results.html`)
+### 3.5 Global Results (`results.html`)
 
 Super-admin view showing national results plus per-station breakdown.
 
@@ -72,7 +84,7 @@ Super-admin view showing national results plus per-station breakdown.
 - Sorted by 1st preference count
 - Station-level drill-down
 
-### 3.5 Voter ID Management (`voter_id_list.html` etc.)
+### 3.6 Voter ID Management (`voter_id_list.html` etc.)
 
 Stub system for POC testing — will be replaced by the real external ID system.
 
@@ -88,7 +100,8 @@ Stub system for POC testing — will be replaced by the real external ID system.
 ```mermaid
 graph TD
     PM((Polling Master)) -->|Unique Station Key| SL[Station Login]
-    SL -->|Session Unlock| BL[Ballot Interface]
+    SL -->|Station Key Verified| QR[Voter QR Verification Window]
+    QR -->|Optical Scan / Double-Click| BL[Ballot Interface]
 
     Voter((Voter)) -->|1st/2nd/3rd Pref| BL
     BL -->|POST JSON| SV[submit_vote view]

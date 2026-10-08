@@ -1,0 +1,275 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Integrity - Election Commission</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* ---- Top Bar ---- */
+        .top-bar {
+            background-color: white;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .home-icon { font-size:1.8rem; margin-right:10px; color:black; text-decoration:none; }
+        .page-title { font-family:'Iskoola Pota','Nirmala UI',sans-serif; font-size:1.35rem; font-weight:bold; color:black; }
+
+        /* ---- Commission Header ---- */
+        .commission-container {
+            display:flex; justify-content:center; padding:6px;
+            background-color:white;
+            position:fixed; top:48px; left:0; right:0; z-index:99;
+        }
+        .commission-box {
+            background-color:#e8e8e8; border:1px solid #aaa; border-radius:5px;
+            width:100%; max-width:2500px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.1);
+            overflow:hidden; display:flex; flex-direction:column;
+        }
+        .commission-content {
+            display:flex; align-items:center; justify-content:center;
+            padding:6px 14px; gap:12px;
+        }
+        .emblem { width:50px; height:auto; }
+        .text-content { text-align:center; display:flex; flex-direction:column; justify-content:center; }
+        .text-sinhala { font-family:'Iskoola Pota','Nirmala UI',sans-serif; font-size:1rem; color:#4b0082; font-weight:bold; }
+        .text-tamil   { font-family:'Latha','Nirmala UI',sans-serif; font-size:0.85rem; color:#4b0082; margin:2px 0; }
+        .text-english { font-family:'Segoe UI',sans-serif; font-size:0.85rem; color:#4b0082; font-weight:bold; }
+
+        /* ---- Color Strip ---- */
+        .color-strip { display:flex; height:6px; width:100%; margin-top:4px; }
+        .strip-green  { background-color:#005f56; flex:1; }
+        .strip-orange { background-color:#e37e00; flex:1; }
+        .strip-yellow { background-color:#ffc400; flex:2; }
+        .strip-maroon { background-color:#781830; flex:3; }
+
+        /* ---- Main Layout ---- */
+        .main-content { margin-top:155px; padding:20px; max-width:1400px; margin-left:auto; margin-right:auto; }
+
+        /* ---- Page Header ---- */
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px; }
+        .page-header h1 { font-family:'Iskoola Pota','Nirmala UI',sans-serif; font-size:1.8rem; font-weight:bold; color:#4b0082; margin:0; }
+        .page-header p  { font-size:1rem; color:#718096; margin:5px 0 0 0; }
+
+        /* ---- Status Banner ---- */
+        .status-banner {
+            display:flex; align-items:center; gap:12px;
+            border-radius:8px; padding:14px 20px; margin-bottom:24px;
+            border:2px solid; font-size:1rem; font-weight:600;
+        }
+        .status-banner.valid   { background:#f0fdf4; border-color:#16a34a; color:#15803d; }
+        .status-banner.invalid { background:#fff1f2; border-color:#dc2626; color:#b91c1c; }
+        .status-icon { font-size:1.6rem; }
+        .status-text-detail { font-size:0.85rem; font-weight:400; margin-top:2px; color:inherit; opacity:0.85; }
+
+        /* ---- Stats Row ---- */
+        .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:24px; }
+        .stat-card {
+            background:white; border:1px solid #e0e0e0; border-radius:8px;
+            padding:14px 18px; text-align:center;
+            box-shadow:0 2px 6px rgba(0,0,0,0.05);
+        }
+        .stat-value { font-size:2rem; font-weight:bold; color:#4b0082; }
+        .stat-label { font-size:0.8rem; color:#718096; margin-top:4px; text-transform:uppercase; letter-spacing:0.5px; }
+
+        /* ---- Blockchain Table ---- */
+        .chain-container {
+            background:white; border-radius:12px;
+            box-shadow:0 4px 12px rgba(0,0,0,0.08);
+            overflow:hidden; border:2px solid #e0e0e0;
+        }
+        .chain-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+        .chain-table thead { background:linear-gradient(135deg,#e8e8e8 0%,#f5f5f5 100%); border-bottom:3px solid #781830; }
+        .chain-table th { padding:12px 14px; text-align:left; font-weight:bold; color:#4b0082; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; }
+        .chain-table tbody tr { border-bottom:1px solid #e8e8e8; transition:background-color 0.2s; }
+        .chain-table tbody tr:hover { background-color:#f9f9f9; }
+        .chain-table tbody tr:last-child { border-bottom:none; }
+        .chain-table td { padding:10px 14px; color:#2d3748; vertical-align:middle; }
+        .chain-table td.mono { font-family:'Courier New',monospace; font-size:0.75rem; color:#4b5563; }
+
+        .block-index { font-weight:bold; color:#4b0082; }
+        .hash-pill {
+            display:inline-block; background:#f3f4f6; border-radius:4px;
+            padding:2px 6px; font-family:'Courier New',monospace; font-size:0.7rem;
+            color:#374151; border:1px solid #e5e7eb; word-break:break-all;
+            max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        }
+        .hash-pill:hover { max-width:none; white-space:normal; }
+
+        .row-tampered { background:#fff1f2 !important; }
+        .row-tampered td { color:#b91c1c !important; }
+        .tamper-badge {
+            display:inline-block; background:#dc2626; color:white;
+            border-radius:4px; padding:2px 8px; font-size:0.7rem; font-weight:bold;
+        }
+
+        /* ---- Empty state ---- */
+        .empty-state { text-align:center; padding:60px 20px; color:#9ca3af; }
+        .empty-state .empty-icon { font-size:3rem; }
+        .empty-state p { margin-top:10px; font-size:0.95rem; }
+
+        /* ---- Refresh button ---- */
+        .btn-refresh {
+            background:white; border:1px solid #781830; color:#781830;
+            padding:8px 16px; border-radius:6px; cursor:pointer;
+            font-size:0.85rem; font-weight:600; text-decoration:none;
+            display:inline-flex; align-items:center; gap:6px;
+            transition:background 0.2s;
+        }
+        .btn-refresh:hover { background:#781830; color:white; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <a href="/" class="home-icon">&#127968;</a>
+        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    </div>
+
+    <!-- Election Commission Header -->
+    <div class="commission-container">
+        <div class="commission-box">
+            <div class="commission-content">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Emblem" class="emblem">
+                <div class="text-content">
+                    <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english">Election Commission</div>
+                </div>
+            </div>
+            <div class="color-strip">
+                <div class="strip-green"></div>
+                <div class="strip-orange"></div>
+                <div class="strip-yellow"></div>
+                <div class="strip-maroon"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <div>
+                <h1>&#128274; Vote Ledger Integrity</h1>
+                <p>Blockchain-linked tamper-evident vote record &mdash; SHA-256 chain verification</p>
+            </div>
+            <a href="{% url 'chain_integrity' %}" class="btn-refresh">&#8635; Refresh</a>
+        </div>
+
+        <!-- Status Banner -->
+        {% if is_valid %}
+        <div class="status-banner valid">
+            <span class="status-icon">&#9989;</span>
+            <div>
+                <div>Chain Integrity: VERIFIED</div>
+                <div class="status-text-detail">All {{ total }} block{{ total|pluralize }} passed hash and linkage checks.</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="status-banner invalid">
+            <span class="status-icon">&#10060;</span>
+            <div>
+                <div>Chain Integrity: TAMPERED</div>
+                <div class="status-text-detail">{{ error_detail }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ total }}</div>
+                <div class="stat-label">Total Blocks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="color:{% if is_valid %}#16a34a{% else %}#dc2626{% endif %};">
+                    {% if is_valid %}&#10003;{% else %}&#10007;{% endif %}
+                </div>
+                <div class="stat-label">Chain Status</div>
+            </div>
+            {% if blocks %}
+            <div class="stat-card">
+                <div class="stat-value" style="font-size:0.9rem; padding-top:6px; font-family:'Courier New',monospace;">
+                    {{ blocks.0.block_hash|slice:":12" }}&hellip;
+                </div>
+                <div class="stat-label">Genesis Hash</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" style="font-size:0.9rem; padding-top:6px; font-family:'Courier New',monospace;">
+                    {{ blocks|last|stringformat:"s"|slice:":12" }}&hellip;
+                </div>
+                <div class="stat-label">Tip (Last Block)</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Blockchain Table -->
+        <div class="chain-container">
+            {% if blocks %}
+            <table class="chain-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Station</th>
+                        <th>Voted At (UTC)</th>
+                        <th>Ballot Hash</th>
+                        <th>Prev. Hash</th>
+                        <th>Block Hash</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for block in blocks %}
+                    <tr class="{% if not is_valid and bad_index == block.block_index %}row-tampered{% endif %}">
+                        <td><span class="block-index">#{{ block.block_index }}</span></td>
+                        <td>{{ block.station_code }}</td>
+                        <td class="mono">{{ block.voted_at_iso }}</td>
+                        <td><span class="hash-pill" title="{{ block.ballot_hash }}">{{ block.ballot_hash|slice:":20" }}&hellip;</span></td>
+                        <td>
+                            {% if block.block_index == 0 %}
+                                <span class="hash-pill" title="{{ block.previous_hash }}">GENESIS ({{ block.previous_hash|slice:":8" }}&hellip;)</span>
+                            {% else %}
+                                <span class="hash-pill" title="{{ block.previous_hash }}">{{ block.previous_hash|slice:":20" }}&hellip;</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="hash-pill" title="{{ block.block_hash }}">{{ block.block_hash|slice:":20" }}&hellip;</span></td>
+                        <td>
+                            {% if not is_valid and bad_index == block.block_index %}
+                                <span class="tamper-badge">&#9888; TAMPERED</span>
+                            {% else %}
+                                <span style="color:#16a34a; font-weight:600;">&#10003; OK</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">&#9741;</div>
+                <p>No blockchain blocks recorded yet.<br>Blocks are written automatically when votes are cast.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div><!-- /main-content -->
+
+</body>
+</html>

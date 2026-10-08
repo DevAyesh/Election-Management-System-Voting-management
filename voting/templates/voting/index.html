@@ -897,7 +897,7 @@
 <body>
 
     <div class="top-bar">
-        <span class="home-icon">🏠</span>
+        <a href="{% url 'qr_verification' %}" class="home-icon" style="text-decoration:none; cursor:pointer;" title="QR සත්‍යාපන කවුළුව / Voter QR Verification Terminal">🏠</a>
         <div class="page-title">ජනාධිපතිවරණය - 2030</div>
     </div>
 
@@ -1169,6 +1169,10 @@
                         showSuccessModal();
                         // Reset preferences after showing modal
                         resetPreferences();
+                        // Auto-return terminal to QR verification window for next voter after 4 seconds
+                        setTimeout(() => {
+                            window.location.href = "{% url 'qr_verification' %}";
+                        }, 4000);
                     } else {
                         alert('Error: ' + data.message);
                     }
@@ -1204,6 +1208,10 @@
         function closeSuccessModal() {
             const modal = document.getElementById('successModal');
             modal.classList.remove('show');
+            // Return terminal to QR verification window for next voter
+            setTimeout(() => {
+                window.location.href = "{% url 'qr_verification' %}";
+            }, 300);
         }
 
         // Close modal when clicking outside of it

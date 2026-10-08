@@ -15,6 +15,8 @@ urlpatterns = [
     path('station/login/',   views.station_login,  name='station_login'),
     path('station/logout/',  views.station_logout, name='station_logout'),
     path('station/results/', views.station_results, name='station_results'),
+    path('verify/',          views.qr_verification, name='qr_verification'),
+    path('station/verify/',  views.qr_verification, name='station_qr_verify'),
 
     # -------------------------------------------------------------------------
     # Voting (requires active station session)
@@ -35,4 +37,11 @@ urlpatterns = [
     path('voters/create/',            views.voter_id_create, name='voter_id_create'),
     path('voters/bulk/',              views.voter_id_bulk,   name='voter_id_bulk'),
     path('voters/<str:voter_id>/delete/', views.voter_id_delete, name='voter_id_delete'),
+
+    # -------------------------------------------------------------------------
+    # Blockchain chain integrity
+    # -------------------------------------------------------------------------
+    path('chain/',        views.chain_integrity_page, name='chain_integrity'),
+    path('chain/status/', views.chain_integrity_api,  name='chain_status'),
 ]
+

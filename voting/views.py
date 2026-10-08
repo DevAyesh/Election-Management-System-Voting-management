@@ -2,8 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from functools import wraps
 from candidates.models import Candidate
-from .models import Vote, PollingStation, TempVoterId, AuditLog
+from .models import Vote, PollingStation, TempVoterId, AuditLog, BlockchainBlock
 import json
+import threading
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from cryptography.fernet import Fernet
@@ -12,6 +13,10 @@ from django.contrib import messages
 from django.contrib.auth.signals import user_logged_in
 from django.contrib.auth.models import update_last_login
 from django.utils import timezone
+from .blockchain import build_block_fields, get_chain_tip_hash, get_next_block_index
+
+# Serialise blockchain block creation within a process to prevent duplicate indices
+_blockchain_lock = threading.Lock()
 
 # Disconnect the default update_last_login signal to prevent MongoDB ObjectId save error
 user_logged_in.disconnect(update_last_login)
@@ -155,6 +160,38 @@ def get_party_symbol(party_name):
     return normalized_aliases.get(party_name.strip().lower(), None)
 
 
+def get_candidate_sort_priority(candidate):
+    """
+    Sort priority to ensure the 1st row of the voting dashboard displays:
+    1. Anura Dissanayake
+    2. Dilith Jayaweera
+    3. Namal Rajapaksa
+    4. Sajith Premadasa
+    """
+    text = f"{candidate.ballot_name or ''} {candidate.full_name or ''} {candidate.party_name or ''}".lower()
+    
+    if ('anura' in text and 'dissanayake' in text) or 'anura' in text:
+        return 0
+    if 'dilith' in text or 'jayaweera' in text:
+        return 1
+    if 'namal' in text or 'rajapak' in text:
+        return 2
+    if 'sajith' in text or 'premadasa' in text:
+        return 3
+    
+    # Party fallback
+    if 'national people' in text or 'npp' in text:
+        return 0
+    if 'mawbima' in text or 'mjp' in text:
+        return 1
+    if 'podujana' in text or 'slpp' in text:
+        return 2
+    if 'samagi' in text or 'sjb' in text:
+        return 3
+        
+    return 100
+
+
 # ---------------------------------------------------------------------------
 # Main voting views
 # ---------------------------------------------------------------------------
@@ -174,6 +211,9 @@ def index(request):
         name_parts = c.full_name.split()
         c.short_name = f"{name_parts[0]} {name_parts[-1]}" if len(name_parts) >= 2 else c.full_name
         candidates.append(c)
+
+    # Sort candidates with 1st row priority: Anura Dissanayake, Dilith Jayaweera, Namal Rajapaksa, Sajith Premadasa
+    candidates.sort(key=lambda c: (get_candidate_sort_priority(c), c.ballot_name or c.full_name))
 
     station_name = request.session.get('polling_station_name', '')
     
@@ -215,7 +255,7 @@ def submit_vote(request):
         )
 
     try:
-        # Lock against double-click for this submission cycle
+    
         request.session['vote_in_progress'] = True
         request.session.save()
 
@@ -239,17 +279,40 @@ def submit_vote(request):
         encrypted_data = cipher_suite.encrypt(json_str.encode()).decode()
 
         # Store vote with station tag
-        Vote.objects.create(
+        vote_obj = Vote.objects.create(
             preferences=encrypted_data,
             polling_station=station_name,
             station_code=station_code,
         )
 
+        # ------------------------------------------------------------------
+        # Blockchain ledger: append one block per vote.
+        # The lock ensures no two concurrent requests race on block_index.
+        # ------------------------------------------------------------------
+        try:
+            with _blockchain_lock:
+                next_index    = get_next_block_index(BlockchainBlock)
+                prev_hash     = get_chain_tip_hash(BlockchainBlock)
+                voted_at_utc  = vote_obj.voted_at  # auto_now_add DateTimeField
+                block_fields  = build_block_fields(
+                    block_index   = next_index,
+                    station_code  = station_code,
+                    voted_at      = voted_at_utc,
+                    preferences   = preferences,
+                    previous_hash = prev_hash,
+                )
+                BlockchainBlock.objects.create(**block_fields)
+        except Exception as bc_err:
+            # Blockchain failure must NOT silently swallow a vote.
+            # Roll back the vote and surface the error so the operator is alerted.
+            vote_obj.delete()
+            raise RuntimeError(f"Blockchain ledger write failed: {bc_err}") from bc_err
+
         _write_audit(
             AuditLog.EventType.VOTE_CAST,
             request=request,
             station_name=station_name,
-            details=f"Vote cast at station {station_code}",
+            details=f"Vote cast at station {station_code} | chain block #{next_index}",
         )
 
         # Reset lock — terminal is ready for the NEXT voter
@@ -284,7 +347,7 @@ def station_login(request):
         destination = request.GET.get('destination', 'voting')
         if destination == 'results':
             return redirect('station_results')
-        return redirect('voting_index')
+        return redirect('qr_verification')
 
     if request.method == 'POST':
         login_key = request.POST.get('login_key', '').strip()
@@ -314,7 +377,7 @@ def station_login(request):
             
             if destination == 'results':
                 return redirect('station_results')
-            return redirect('voting_index')
+            return redirect('qr_verification')
 
         except PollingStation.DoesNotExist:
             _write_audit(
@@ -343,6 +406,33 @@ def station_logout(request):
     request.session.save()
     messages.success(request, 'Polling station session ended.')
     return redirect('station_login')
+
+
+@station_login_required
+def qr_verification(request):
+    """
+    Voter QR Code Optical Verification Window.
+    Displayed after polling station key authentication to scan issued voter tokens.
+    Double-clicking anywhere on the window authorizes the voter and opens the voting ballot.
+    """
+    station_name = request.session.get('polling_station_name', '')
+    station_district = request.session.get('polling_station_district', '')
+    station_division = request.session.get('polling_station_division', '')
+
+    expiry_date = request.session.get_expiry_date()
+    expiry_timestamp = expiry_date.timestamp() * 1000 if expiry_date else 0
+
+    dist_abbr = station_district[:3].upper() if station_district else 'STN'
+    div_abbr = station_division[:3].upper() if station_division else '01'
+    terminal_code = f"SL-EC-{dist_abbr}-{div_abbr}-VOTING-01"
+
+    return render(request, 'voting/qr_verification.html', {
+        'station_name': station_name,
+        'station_district': station_district,
+        'station_division': station_division,
+        'terminal_code': terminal_code,
+        'expiry_timestamp': expiry_timestamp,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -399,6 +489,10 @@ def station_results(request):
     second_count = sum(r['counts'][2] for r in results_data)
     third_count = sum(r['counts'][3] for r in results_data)
 
+    # Chain integrity check
+    from .blockchain import verify_chain as _verify_chain
+    chain_is_valid, chain_error = _verify_chain(BlockchainBlock.objects.order_by('block_index'))
+
     return render(request, 'voting/station_results.html', {
         'results': results_data,
         'station_name': station_name,
@@ -406,6 +500,8 @@ def station_results(request):
         'first_count': first_count,
         'second_count': second_count,
         'third_count': third_count,
+        'chain_is_valid': chain_is_valid,
+        'chain_error': chain_error,
     })
 
 
@@ -468,10 +564,17 @@ def results(request):
 
     results_data.sort(key=lambda x: x['total_1st'], reverse=True)
 
+    # Chain integrity check
+    from .blockchain import verify_chain as _verify_chain
+    chain_is_valid, chain_error = _verify_chain(BlockchainBlock.objects.order_by('block_index'))
+
     return render(request, 'voting/results.html', {
         'results': results_data,
         'station_breakdown': station_breakdown,
+        'chain_is_valid': chain_is_valid,
+        'chain_error': chain_error,
     })
+
 
 
 # ---------------------------------------------------------------------------
@@ -480,6 +583,59 @@ def results(request):
 
 def success(request):
     return render(request, 'voting/success.html')
+
+
+# ---------------------------------------------------------------------------
+# Blockchain chain integrity API + dashboard
+# ---------------------------------------------------------------------------
+
+@results_login_required
+def chain_integrity_api(request):
+    """
+    JSON endpoint: verify the entire blockchain and return a status summary.
+    Used by the dashboard and can be polled by monitoring scripts.
+    """
+    from .blockchain import verify_chain as _verify_chain
+    blocks_qs  = BlockchainBlock.objects.order_by('block_index')
+    total      = blocks_qs.count()
+    is_valid, error_detail = _verify_chain(blocks_qs)
+
+    return JsonResponse({
+        'is_valid':     is_valid,
+        'total_blocks': total,
+        'error_detail': error_detail,
+    })
+
+
+@results_login_required
+def chain_integrity_page(request):
+    """
+    HTML dashboard: renders the full blockchain ledger with a tamper indicator.
+    """
+    from .blockchain import verify_chain as _verify_chain
+    blocks_qs      = BlockchainBlock.objects.order_by('block_index')
+    blocks         = list(blocks_qs)
+    total          = len(blocks)
+    is_valid, error_detail = _verify_chain(iter(blocks))
+
+    # Identify the first bad block for highlighting
+    bad_index = None
+    if not is_valid and error_detail:
+        import re
+        m = re.search(r'Block (\d+)', error_detail)
+        if m:
+            bad_index = int(m.group(1))
+
+    return render(request, 'voting/chain_integrity.html', {
+        'blocks':       blocks,
+        'total':        total,
+        'is_valid':     is_valid,
+        'error_detail': error_detail,
+        'bad_index':    bad_index,
+    })
+
+
+
 
 
 # ---------------------------------------------------------------------------

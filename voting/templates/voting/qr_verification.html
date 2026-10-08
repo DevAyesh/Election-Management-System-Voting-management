@@ -1,0 +1,1617 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Commission - QR Voter Verification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ── 1. Page Header (Exact Match with Voting Dashboard) ── */
+        .top-bar {
+            background-color: #ffffff;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #00bcd4; /* Cyan thin accent */
+            height: 46px;
+            flex-shrink: 0;
+        }
+
+        .home-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .page-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: black;
+        }
+
+        /* Election Commission Box */
+        .commission-container {
+            display: flex;
+            justify-content: center;
+            padding: 6px 12px;
+            background-color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .commission-box {
+            background-color: #e8e8e8;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 2500px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .commission-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 14px;
+            gap: 12px;
+        }
+
+        .emblem {
+            width: 48px;
+            height: auto;
+        }
+
+        .text-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1rem;
+            color: #4b0082; /* Indigo institutional shade */
+            font-weight: bold;
+            line-height: 1.25;
+        }
+
+        .text-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.85rem;
+            color: #4b0082;
+            margin: 1px 0;
+        }
+
+        .text-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem;
+            color: #4b0082;
+            font-weight: bold;
+        }
+
+        /* Color Bar */
+        .color-strip {
+            display: flex;
+            height: 6px;
+            width: 100%;
+            margin-top: 3px;
+        }
+
+        .strip-green  { background-color: #005f56; flex: 1; }
+        .strip-orange { background-color: #e37e00; flex: 1; }
+        .strip-yellow { background-color: #ffc400; flex: 2; }
+        .strip-maroon { background-color: #781830; flex: 3; }
+
+        /* ── 2. System Status Bar (Exact Maroon Horizontal Bar) ── */
+        .station-strip {
+            background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 20px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(120, 24, 48, 0.25);
+            flex-shrink: 0;
+        }
+
+        .station-info-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .station-status-right {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            letter-spacing: 0.2px;
+        }
+
+        .status-dot-green {
+            color: #00ff88;
+            font-size: 0.72rem;
+            animation: pulseDot 1.8s infinite;
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { opacity: 0.6; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.15); }
+        }
+
+        /* ── 3. Main Stage & Grid Layout ── */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            background-color: #ffffff;
+        }
+
+        .stage-content-grid {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 18px;
+            width: 100%;
+            max-width: 1340px;
+        }
+
+        .verification-card {
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex: 1.25; /* ~55% proportion */
+            max-width: 680px;
+            padding: 15px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer; /* Allows double click anywhere on card */
+        }
+
+        /* ── Step-by-Step Instructions Guide Card (4 Images in Order) ── */
+        .instructions-guide-card {
+            background: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            flex: 1; /* ~45% proportion */
+            max-width: 560px;
+            padding: 15px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .guide-card-header {
+            text-align: center;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .guide-title-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #4b0082;
+            line-height: 1.2;
+        }
+
+        .guide-title-en {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.82rem;
+            color: #718096;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: auto 0;
+        }
+
+        .step-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .step-image-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .step-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .step-label {
+            padding: 4px 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            min-height: 44px;
+        }
+
+        .step-lbl-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.2;
+        }
+
+        .step-lbl-en {
+            font-size: 0.68rem;
+            color: #64748b;
+            margin-top: 1px;
+        }
+
+        .guide-footer-note {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding: 5px 10px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #4b0082;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* ── Image Modal Overlay ── */
+        .image-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .image-modal-overlay.show {
+            display: flex;
+        }
+        .image-modal-content {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 820px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .image-modal-content img {
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+        }
+        .image-modal-caption {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #1e293b;
+            margin: 12px 0 8px;
+        }
+        .image-modal-close {
+            background: #781830;
+            color: #ffffff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+        .image-modal-close:hover {
+            background: #5e1226;
+        }
+
+        /* ── 4. Card Title ── */
+        .card-title-header {
+            text-align: center;
+            border-bottom: 1px solid #eeeeee;
+            padding-bottom: 8px;
+        }
+
+        .heading-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.45rem;
+            font-weight: bold;
+            color: #4b0082;
+            line-height: 1.25;
+        }
+
+        .heading-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            color: #718096;
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        /* ── 5. Instruction Section ── */
+        .instruction-box {
+            background-color: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #781830;
+            border-radius: 4px;
+            padding: 6px 12px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .instruction-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.92rem;
+            font-weight: bold;
+            color: #1a202c;
+            line-height: 1.3;
+        }
+
+        .instruction-en {
+            font-size: 0.8rem;
+            color: #4a5568;
+            margin-top: 1px;
+        }
+
+
+        /* ── 6. QR Scanner Area ── */
+        .scanner-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 555px;
+            aspect-ratio: 4 / 3;
+            max-height: 335px;
+            margin: 4px auto;
+            background: #111827;
+            border-radius: 6px;
+            border: 2px solid #cbd5e1;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
+            transition: border-color 0.25s ease;
+        }
+
+        #cameraFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+            transform: scaleX(-1);
+        }
+
+        #cameraCanvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+            display: none;
+        }
+
+        /* Subtle Dim Overlay when verifying or displaying terminal states */
+        .scanner-backdrop-dim {
+            position: absolute;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.65);
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .scanner-backdrop-dim.active {
+            opacity: 1;
+        }
+
+        /* Scanner HUD Layer */
+        .scanner-hud {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Target Reticle Frame */
+        .target-reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease, background-color 0.25s ease;
+            overflow: hidden;
+        }
+
+        .reticle-corner {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-color: #00bcd4;
+            border-style: solid;
+            transition: border-color 0.25s ease;
+            z-index: 5;
+        }
+        .rc-tl { top: 0; left: 0; border-width: 3px 0 0 3px; }
+        .rc-tr { top: 0; right: 0; border-width: 3px 3px 0 0; }
+        .rc-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; }
+        .rc-br { bottom: 0; right: 0; border-width: 0 3px 3px 0; }
+
+        /* Reticle Center Crosshair / Alignment Marker */
+        .reticle-cross-h, .reticle-cross-v {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.35);
+            transition: opacity 0.2s ease;
+            z-index: 4;
+        }
+        .reticle-cross-h {
+            top: 50%;
+            left: calc(50% - 10px);
+            width: 20px;
+            height: 1px;
+            transform: translateY(-50%);
+        }
+        .reticle-cross-v {
+            left: 50%;
+            top: calc(50% - 10px);
+            height: 20px;
+            width: 1px;
+            transform: translateX(-50%);
+        }
+
+        /* Realistic Animated Scan Line */
+        .scan-laser-line {
+            position: absolute;
+            left: 6%;
+            right: 6%;
+            height: 2px;
+            background: #00bcd4;
+            box-shadow: 0 0 8px #00bcd4, 0 0 2px #ffffff;
+            animation: moveScanLaser 2.0s ease-in-out infinite;
+            z-index: 4;
+            transition: opacity 0.2s ease;
+        }
+
+        @keyframes moveScanLaser {
+            0% { top: 6%; opacity: 0.6; }
+            50% { top: 94%; opacity: 1; }
+            100% { top: 6%; opacity: 0.6; }
+        }
+
+        /* Restrained Frame Pulse on QR Detected */
+        .target-reticle.pulse {
+            animation: reticleDetectedPulse 0.4s ease-out forwards;
+        }
+        @keyframes reticleDetectedPulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            45% { transform: translate(-50%, -50%) scale(0.95); }
+            100% { transform: translate(-50%, -50%) scale(0.97); }
+        }
+
+        /* Restrained Frame Shake on Error */
+        .target-reticle.shake {
+            animation: reticleShake 0.4s ease-in-out;
+        }
+        @keyframes reticleShake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            20% { transform: translate(calc(-50% - 4px), -50%); }
+            40% { transform: translate(calc(-50% + 4px), -50%); }
+            60% { transform: translate(calc(-50% - 3px), -50%); }
+            80% { transform: translate(calc(-50% + 3px), -50%); }
+        }
+
+        /* State Indicator in Center of Reticle */
+        .center-state-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        /* Circular Progress Spinner for Verifying */
+        .center-spinner {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #00b33c;
+            border-radius: 50%;
+            animation: spinRing 0.85s linear infinite;
+        }
+        @keyframes spinRing {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Center Result Badges & Icons */
+        .center-badge {
+            display: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+        }
+        .center-badge.badge-success {
+            background: #00b33c;
+            animation: scaleInBadge 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .center-badge.badge-error {
+            background: #c0405a;
+            animation: scaleInBadge 0.3s ease-out forwards;
+        }
+        .center-badge.badge-warning {
+            background: #d97706;
+            animation: scaleInBadge 0.3s ease-out forwards;
+        }
+        .center-badge.badge-camera {
+            background: #475569;
+            font-size: 1.2rem;
+            animation: scaleInBadge 0.3s ease-out forwards;
+        }
+
+        @keyframes scaleInBadge {
+            0% { transform: scale(0.65); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* HUD Labels */
+        .hud-label-top {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 3px 8px;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .hud-label-bot {
+            position: absolute;
+            bottom: 8px;
+            right: 10px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #00bcd4;
+            background: rgba(0, 0, 0, 0.65);
+            padding: 3px 8px;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+            transition: color 0.2s ease;
+        }
+
+        /* ── 7 & 11. State Content Displays Inside Card ── */
+        .state-panel {
+            display: none;
+            width: 100%;
+            text-align: center;
+        }
+        .state-panel.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Status Text Lines */
+        .status-badge-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            letter-spacing: 0.5px;
+        }
+        .status-badge-line.color-green { color: #00b33c; }
+        .status-badge-line.color-cyan { color: #00bcd4; }
+        .status-badge-line.color-amber { color: #d97706; }
+        .status-badge-line.color-red { color: #c0405a; }
+
+        .status-sub-text {
+            font-size: 0.84rem;
+            color: #4a5568;
+            margin-top: 1px;
+        }
+
+        /* Results Display State Box */
+        .feedback-state-box {
+            width: 100%;
+            max-width: 520px;
+            border-radius: 6px;
+            padding: 14px 18px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            margin: 2px auto;
+        }
+
+        /* Success Box */
+        .box-success {
+            background-color: #f0fdf4;
+            border: 2px solid #00b33c;
+            color: #14532d;
+        }
+        .box-success .state-icon { color: #00b33c; font-size: 1.9rem; }
+        .box-success .state-heading { color: #008829; font-weight: bold; font-size: 1.1rem; }
+
+        /* Error/Invalid Box */
+        .box-error {
+            background-color: #fef2f2;
+            border: 2px solid #c0405a;
+            color: #7f1d1d;
+        }
+        .box-error .state-icon { color: #c0405a; font-size: 1.9rem; }
+        .box-error .state-heading { color: #781830; font-weight: bold; font-size: 1.1rem; }
+
+        /* Warning/Used/Expired Box */
+        .box-warning {
+            background-color: #fffbeb;
+            border: 2px solid #ffd700;
+            color: #78350f;
+        }
+        .box-warning .state-icon { color: #d97706; font-size: 1.9rem; }
+        .box-warning .state-heading { color: #b45309; font-weight: bold; font-size: 1.1rem; }
+
+        .state-desc {
+            font-size: 0.86rem;
+            margin-top: 3px;
+            color: #374151;
+        }
+
+        /* Privacy-compliant Info Summary */
+        .privacy-summary {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 6px 12px;
+            margin: 8px 0 4px;
+            font-size: 0.8rem;
+            text-align: left;
+        }
+        .privacy-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+        .privacy-row strong {
+            color: #111827;
+        }
+
+        /* ── 8 & 14. Action Buttons (Exact System Convention) ── */
+        .actions-strip {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        /* Primary Green Confirm/Continue Button */
+        .btn-confirm {
+            background-color: #00b33c;
+            color: white;
+            border: none;
+            padding: 9px 24px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s, transform 0.1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+        .btn-confirm:hover {
+            background-color: #009933;
+            transform: translateY(-1px);
+        }
+
+        /* Secondary System Button (Maroon Outline) */
+        .btn-secondary {
+            background: white;
+            color: #781830;
+            border: 2px solid #781830;
+            padding: 7px 18px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:hover {
+            background: #fdf2f4;
+            color: #5e1226;
+        }
+
+        /* System Yellow Warning/Reset Button */
+        .btn-warning {
+            background-color: #ffd700;
+            color: #1a1a1a;
+            border: none;
+            padding: 7px 18px;
+            font-weight: bold;
+            font-size: 0.88rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-warning:hover {
+            background-color: #e6c200;
+        }
+
+        /* Accessibility: Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            .scan-laser-line {
+                animation: none !important;
+                top: 50% !important;
+                opacity: 0.5 !important;
+            }
+            .target-reticle.pulse, .target-reticle.shake {
+                animation: none !important;
+            }
+            .center-spinner {
+                animation-duration: 2s !important;
+            }
+            .center-badge {
+                animation: none !important;
+                transform: none !important;
+                opacity: 1 !important;
+            }
+        }
+
+        /* ── 10. Footer ── */
+        .footer {
+            background-color: #ffffff;
+            padding: 10px 14px;
+            border-top: 2px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.84rem;
+            color: #718096;
+            flex-shrink: 0;
+        }
+
+        /* ── 12. [DEVELOPMENT ONLY] Demo State Switcher ── */
+        /* REMOVE OR COMMENT OUT THIS BLOCK BEFORE PRODUCTION DEPLOYMENT */
+        .dev-state-switcher {
+            background: #f8fafc;
+            border-top: 1px dashed #cbd5e1;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        .dev-badge {
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #475569;
+        }
+        .dev-select {
+            padding: 3px 8px;
+            font-size: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            background: white;
+            color: #1e293b;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Responsive behavior */
+        @media (max-width: 1080px) {
+            .stage-content-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+            .verification-card, .instructions-guide-card {
+                max-width: 700px;
+                width: 100%;
+            }
+        }
+        @media (max-width: 768px) {
+            .commission-content { gap: 8px; }
+            .emblem { width: 38px; }
+            .text-sinhala { font-size: 0.88rem; }
+            .verification-card, .instructions-guide-card { padding: 16px; }
+            .scanner-wrapper { aspect-ratio: 1 / 1; }
+            .target-reticle { width: 160px; height: 160px; }
+            .station-strip { flex-direction: column; gap: 4px; text-align: center; }
+            .steps-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── 1. Page Header (Exact Match with Voting Dashboard) ── -->
+    <div class="top-bar">
+        <a href="{% url 'voting_index' %}" class="home-icon" title="Ballot">🏠</a>
+        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    </div>
+
+    <!-- Election Commission Box -->
+    <div class="commission-container">
+        <div class="commission-box">
+            <div class="commission-content">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Sri Lanka State Emblem" class="emblem">
+                <div class="text-content">
+                    <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english">Election Commission</div>
+                </div>
+            </div>
+            <div class="color-strip">
+                <div class="strip-green"></div>
+                <div class="strip-orange"></div>
+                <div class="strip-yellow"></div>
+                <div class="strip-maroon"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 2. System Status Bar (Exact Maroon Horizontal Bar) ── -->
+    <div class="station-strip">
+        <div class="station-info-left">
+            <span>📍</span>
+            <span>{{ station_district|default:"Anuradhapura" }} / {{ station_division|default:"Anuradhapura East" }}</span>
+        </div>
+        <div class="station-status-right">
+            <span class="status-dot-green">●</span>
+            <span>Scanner Online</span>
+        </div>
+    </div>
+
+    <!-- ── 3. Main Stage with Step-by-Step Guide & QR Verification Card ── -->
+    <main class="main-stage">
+        <div class="stage-content-grid">
+
+            <!-- LEFT: Step-by-Step Instruction Guide (4 Images in Sequential Order) -->
+            <div class="instructions-guide-card">
+                <div class="guide-card-header">
+                    <h2 class="guide-title-si">ඡන්දදායක මාර්ගෝපදේශය</h2>
+                    <div class="guide-title-en">Step-by-Step Voter QR Scanning Guide</div>
+                </div>
+
+                <div class="steps-grid">
+                    <!-- Step 1 -->
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_1.png" %}', '1. Keep printed QR code ready / මුද්‍රිත QR පත්‍රිකාව සූදානම් කරගන්න')">
+                        <div class="step-image-wrap">
+                            <img src="{% static 'voting/images/qr_step_1.png' %}" alt="Step 1: Keep printed QR code ready" class="step-img">
+                        </div>
+                        <div class="step-label">
+                            <span class="step-lbl-si">මුද්‍රිත QR පත්‍රිකාව සූදානම් කරගන්න</span>
+                            <span class="step-lbl-en">Keep printed QR code ready</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_2.png" %}', '2. Present QR code to scanner / QR කේතය ස්කෑනරය වෙත යොමු කරන්න')">
+                        <div class="step-image-wrap">
+                            <img src="{% static 'voting/images/qr_step_2.png' %}" alt="Step 2: Present QR code to scanner" class="step-img">
+                        </div>
+                        <div class="step-label">
+                            <span class="step-lbl-si">QR කේතය ස්කෑනරය වෙත යොමු කරන්න</span>
+                            <span class="step-lbl-en">Present QR code to scanner</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_3.png" %}', '3. Align inside scanner frame / රාමුව තුළ නිවැරදිව ස්ථානගත කරන්න')">
+                        <div class="step-image-wrap">
+                            <img src="{% static 'voting/images/qr_step_3.png' %}" alt="Step 3: Align inside scanner frame" class="step-img">
+                        </div>
+                        <div class="step-label">
+                            <span class="step-lbl-si">රාමුව තුළ නිවැරදිව ස්ථානගත කරන්න</span>
+                            <span class="step-lbl-en">Align inside scanner frame</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_4.png" %}', '4. Hold steady and wait for verification / තහවුරු වන තෙක් අල්ලාගෙන සිටින්න')">
+                        <div class="step-image-wrap">
+                            <img src="{% static 'voting/images/qr_step_4.png' %}" alt="Step 4: Hold steady and wait for verification" class="step-img">
+                        </div>
+                        <div class="step-label">
+                            <span class="step-lbl-si">තහවුරු වන තෙක් අල්ලාගෙන සිටින්න</span>
+                            <span class="step-lbl-en">Hold steady and wait for verification</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="guide-footer-note">
+                    <span>💡 පියවර අනුපිළිවෙලින් අනුගමනය කරන්න &nbsp;•&nbsp; Follow the steps in order: 1 → 2 → 3 → 4</span>
+                </div>
+            </div>
+            <!-- END instructions-guide-card -->
+
+            <!-- RIGHT: QR Verification Card -->
+            <div class="verification-card" id="verificationCard" title="Double-click to simulate verification flow">
+
+                <!-- 4. Card Title -->
+                <div class="card-title-header">
+                    <h1 class="heading-sinhala">QR ඡන්දදායක සත්‍යාපනය</h1>
+                    <h2 class="heading-english">Voter Authorization Scanner</h2>
+                </div>
+
+                <!-- 5. Instruction Section -->
+                <div class="instruction-box" id="instructionBox">
+                    <div class="instruction-si">බලයලත් ඡන්දදායක QR කේතය කැමරාව ඉදිරියේ තබන්න.</div>
+                    <div class="instruction-en">Place the authorized Voter QR Code inside the scanner area.</div>
+                </div>
+
+                <!-- 6. QR Scanner Component with Camera Background & Interactive Overlays -->
+                <div class="scanner-wrapper" id="scannerWrapper">
+                    <!-- Camera Background: Live Video Feed or Fallback Grid Canvas -->
+                    <video id="cameraFeed" autoplay playsinline muted></video>
+                    <canvas id="cameraCanvas"></canvas>
+
+                    <!-- Background Dimmer for Verifying & Outcome States -->
+                    <div class="scanner-backdrop-dim" id="scannerDim"></div>
+
+                    <!-- HUD Overlay -->
+                    <div class="scanner-hud">
+                        <div class="hud-label-top" id="hudTopLabel">CAMERA ACTIVE</div>
+                        <div class="hud-label-bot" id="hudStatusLabel">WAITING FOR QR CODE</div>
+
+                        <!-- Target Reticle & Framed Scanner Area -->
+                        <div class="target-reticle" id="targetReticle">
+                            <!-- Reticle Corner Brackets -->
+                            <div class="reticle-corner rc-tl"></div>
+                            <div class="reticle-corner rc-tr"></div>
+                            <div class="reticle-corner rc-bl"></div>
+                            <div class="reticle-corner rc-br"></div>
+
+                            <!-- Center Alignment Crosshair -->
+                            <div class="reticle-cross-h" id="reticleCrossH"></div>
+                            <div class="reticle-cross-v" id="reticleCrossV"></div>
+
+                            <!-- Animated Scanning Laser Line -->
+                            <div class="scan-laser-line" id="laserLine"></div>
+
+                            <!-- Center State Indicator Icons / Spinners -->
+                            <div class="center-state-indicator">
+                                <div class="center-spinner" id="centerSpinner"></div>
+                                <div class="center-badge badge-success" id="badgeSuccess">✓</div>
+                                <div class="center-badge badge-error" id="badgeError">✕</div>
+                                <div class="center-badge badge-warning" id="badgeWarning">⚠️</div>
+                                <div class="center-badge badge-warning" id="badgeExpired">⏱️</div>
+                                <div class="center-badge badge-camera" id="badgeCamera">📷</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 7 & 11. State Content Displays Below Scanner ── -->
+
+                <!-- State: SEARCHING (Default) -->
+                <div class="state-panel active" id="panelSearching" aria-live="polite">
+                    <div class="status-badge-line color-green">
+                        <span class="status-dot-green">●</span> SCANNING
+                    </div>
+                    <div class="status-sub-text">Waiting for voter authorization QR code</div>
+                    <div class="actions-strip">
+                        <button type="button" class="btn-secondary" onclick="restartScanner()">
+                            <span>↺</span> Restart Scanner
+                        </button>
+                    </div>
+                </div>
+
+                <!-- State: DETECTED -->
+                <div class="state-panel" id="panelDetected" aria-live="polite">
+                    <div class="status-badge-line color-green">
+                        <span class="status-dot-green">●</span> QR CODE DETECTED
+                    </div>
+                    <div class="status-sub-text">Capturing voter authorization token...</div>
+                </div>
+
+                <!-- State: VERIFYING -->
+                <div class="state-panel" id="panelVerifying" aria-live="polite">
+                    <div class="status-badge-line color-cyan">
+                        <span>◌</span> VERIFYING QR CODE...
+                    </div>
+                    <div class="status-sub-text">Verifying voter authorization with election registry...</div>
+                </div>
+
+                <!-- State: SUCCESS -->
+                <div class="state-panel" id="panelSuccess" aria-live="polite">
+                    <div class="feedback-state-box box-success">
+                        <div class="state-icon">✓</div>
+                        <div class="state-heading">VOTER AUTHORIZATION SUCCESSFUL</div>
+                        <div class="state-desc">QR verification completed successfully.</div>
+
+                        <!-- Privacy Compliant Verification Summary -->
+                        <div class="privacy-summary">
+                            <div class="privacy-row">
+                                <span>Authorization Status:</span>
+                                <strong style="color: #008829;">Verified (Active Session)</strong>
+                            </div>
+                            <div class="privacy-row">
+                                <span>Polling Division:</span>
+                                <strong>{{ station_name|default:"Anuradhapura / Anuradhapura East (C)" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="actions-strip">
+                        <a href="{% url 'voting_index' %}" class="btn-confirm" id="btnContinueVoting">
+                            Continue to Voting &nbsp;➔
+                        </a>
+                    </div>
+                </div>
+
+                <!-- State: INVALID -->
+                <div class="state-panel" id="panelInvalid" aria-live="polite">
+                    <div class="feedback-state-box box-error">
+                        <div class="state-icon">✕</div>
+                        <div class="state-heading">INVALID QR CODE</div>
+                        <div class="state-desc">This QR code could not be verified.</div>
+                    </div>
+                    <div class="actions-strip">
+                        <button type="button" class="btn-secondary" onclick="restartScanner()">
+                            <span>↺</span> Scan Again
+                        </button>
+                    </div>
+                </div>
+
+                <!-- State: USED -->
+                <div class="state-panel" id="panelUsed" aria-live="polite">
+                    <div class="feedback-state-box box-warning">
+                        <div class="state-icon">⚠️</div>
+                        <div class="state-heading">QR CODE ALREADY USED</div>
+                        <div class="state-desc">This authorization token has already been used.</div>
+                    </div>
+                    <div class="actions-strip">
+                        <button type="button" class="btn-secondary" onclick="restartScanner()">
+                            <span>↺</span> Scan Another QR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- State: EXPIRED -->
+                <div class="state-panel" id="panelExpired" aria-live="polite">
+                    <div class="feedback-state-box box-warning">
+                        <div class="state-icon">⏱️</div>
+                        <div class="state-heading">QR CODE EXPIRED</div>
+                        <div class="state-desc">This authorization QR code is no longer valid.</div>
+                    </div>
+                    <div class="actions-strip">
+                        <button type="button" class="btn-secondary" onclick="restartScanner()">
+                            <span>↺</span> Scan Again
+                        </button>
+                    </div>
+                </div>
+
+                <!-- State: CAMERA_ERROR -->
+                <div class="state-panel" id="panelCameraError" aria-live="polite">
+                    <div class="feedback-state-box box-error">
+                        <div class="state-icon">📷</div>
+                        <div class="state-heading">CAMERA UNAVAILABLE</div>
+                        <div class="state-desc">Unable to access the camera device.</div>
+                    </div>
+                    <div class="actions-strip">
+                        <button type="button" class="btn-secondary" onclick="restartScanner()">
+                            <span>↺</span> Retry Camera
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+            <!-- END verification-card -->
+
+        </div>
+        <!-- END stage-content-grid -->
+    </main>
+
+    <!-- ── Image Preview Modal ── -->
+    <div class="image-modal-overlay" id="imageModalOverlay" onclick="closeImageModal()">
+        <div class="image-modal-content" onclick="event.stopPropagation()">
+            <img id="imageModalImg" src="" alt="Enlarged Step Illustration">
+            <div class="image-modal-caption" id="imageModalCaption"></div>
+            <button type="button" class="image-modal-close" onclick="closeImageModal()">✕ හරි / Close</button>
+        </div>
+    </div>
+
+    <!-- ── 10. Footer (Exact System Styling) ── -->
+    <footer class="footer">
+        <span>🔒 Secure Voter Verification • Single-Use QR Authorization</span>
+    </footer>
+
+    <!-- ================================================================= -->
+    <!-- 12. [DEVELOPMENT ONLY] Temporary State & Demo Simulation Controls  -->
+    <!-- Remove or comment out this block when real backend is connected    -->
+    <!-- ================================================================= -->
+    <div class="dev-state-switcher" id="devStateSwitcher">
+        <span class="dev-badge">DEV DEMO</span>
+        <span>Scanner State:</span>
+        <select class="dev-select" id="devSelectState" onchange="setScannerState(this.value)">
+            <option value="searching">SEARCHING (Normal)</option>
+            <option value="detected">DETECTED (Pulse)</option>
+            <option value="verifying">VERIFYING (Spinner)</option>
+            <option value="success">SUCCESS (Verified)</option>
+            <option value="invalid">INVALID (Error Shake)</option>
+            <option value="used">USED (Already Voted)</option>
+            <option value="expired">EXPIRED (Session Out)</option>
+            <option value="camera_error">CAMERA_ERROR (Hardware Issue)</option>
+        </select>
+        <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 0.72rem; background: white;" onclick="startSimulatedVerification()">
+            ▶ Run Demo Flow
+        </button>
+        <span style="color: #94a3b8; font-size: 0.7rem;">(Shortcuts: Double-Click / Space to run flow | 1-8 to set state)</span>
+    </div>
+    <!-- END DEVELOPMENT ONLY BLOCK -->
+
+    <!-- ── Script Logic ── -->
+    <script>
+        // DEVELOPMENT ONLY
+        // Remove when real QR verification is connected
+        const VOTING_DASHBOARD_URL = "{% url 'voting_index' %}";
+
+        // Element references
+        const videoFeed = document.getElementById('cameraFeed');
+        const cameraCanvas = document.getElementById('cameraCanvas');
+        const scannerWrapper = document.getElementById('scannerWrapper');
+        const scannerDim = document.getElementById('scannerDim');
+        const targetReticle = document.getElementById('targetReticle');
+        const laserLine = document.getElementById('laserLine');
+        const hudTopLabel = document.getElementById('hudTopLabel');
+        const hudStatusLabel = document.getElementById('hudStatusLabel');
+        const reticleCrossH = document.getElementById('reticleCrossH');
+        const reticleCrossV = document.getElementById('reticleCrossV');
+        const devSelectState = document.getElementById('devSelectState');
+        const verificationCard = document.getElementById('verificationCard');
+
+        // Center indicators
+        const centerSpinner = document.getElementById('centerSpinner');
+        const badgeSuccess = document.getElementById('badgeSuccess');
+        const badgeError = document.getElementById('badgeError');
+        const badgeWarning = document.getElementById('badgeWarning');
+        const badgeExpired = document.getElementById('badgeExpired');
+        const badgeCamera = document.getElementById('badgeCamera');
+
+        // Panels
+        const panels = {
+            searching: document.getElementById('panelSearching'),
+            detected: document.getElementById('panelDetected'),
+            verifying: document.getElementById('panelVerifying'),
+            success: document.getElementById('panelSuccess'),
+            invalid: document.getElementById('panelInvalid'),
+            used: document.getElementById('panelUsed'),
+            expired: document.getElementById('panelExpired'),
+            camera_error: document.getElementById('panelCameraError')
+        };
+
+        let cameraStream = null;
+        let animId = null;
+        let currentState = 'searching';
+        let simulationTimers = [];
+
+        function clearSimulationTimers() {
+            simulationTimers.forEach(t => clearTimeout(t));
+            simulationTimers = [];
+        }
+
+        // ── Camera Initialization & Subtle Canvas Fallback ──
+        async function startCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+
+            try {
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    });
+                    cameraStream = stream;
+                    videoFeed.srcObject = stream;
+                    videoFeed.style.display = 'block';
+                    cameraCanvas.style.display = 'none';
+                    if (animId) cancelAnimationFrame(animId);
+                    return;
+                }
+            } catch (err) {
+                // If permission is denied or camera hardware absent, render crisp canvas grid
+            }
+
+            startCanvasSimulation();
+        }
+
+        function startCanvasSimulation() {
+            videoFeed.style.display = 'none';
+            cameraCanvas.style.display = 'block';
+            const ctx = cameraCanvas.getContext('2d');
+
+            function resize() {
+                cameraCanvas.width = scannerWrapper.clientWidth || 480;
+                cameraCanvas.height = scannerWrapper.clientHeight || 320;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            let t = 0;
+            function draw() {
+                t += 0.02;
+                const w = cameraCanvas.width;
+                const h = cameraCanvas.height;
+
+                // Neutral camera background
+                ctx.fillStyle = '#111827';
+                ctx.fillRect(0, 0, w, h);
+
+                // Subtle scanner grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+                ctx.lineWidth = 1;
+                const sz = 28;
+                for (let x = 0; x < w; x += sz) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0); ctx.lineTo(x, h);
+                    ctx.stroke();
+                }
+                for (let y = 0; y < h; y += sz) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y); ctx.lineTo(w, y);
+                    ctx.stroke();
+                }
+
+                // Subtle radial light variation
+                const cx = w / 2 + Math.sin(t) * 25;
+                const cy = h / 2 + Math.cos(t * 0.8) * 18;
+                const rad = ctx.createRadialGradient(cx, cy, 10, cx, cy, 150);
+                rad.addColorStop(0, 'rgba(0, 188, 212, 0.07)');
+                rad.addColorStop(1, 'transparent');
+                ctx.fillStyle = rad;
+                ctx.fillRect(0, 0, w, h);
+
+                animId = requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // ── Comprehensive State Management Engine ──
+        function setScannerState(state) {
+            currentState = state;
+            if (devSelectState && devSelectState.value !== state) {
+                devSelectState.value = state;
+            }
+
+            // Hide all state panels
+            Object.values(panels).forEach(p => { if (p) p.classList.remove('active'); });
+            if (panels[state]) {
+                panels[state].classList.add('active');
+            }
+
+            // Reset reticle classes & indicators
+            targetReticle.classList.remove('pulse', 'shake');
+            targetReticle.style.transform = 'translate(-50%, -50%)';
+            scannerDim.classList.remove('active');
+
+            // Hide all center badges and spinner
+            centerSpinner.style.display = 'none';
+            badgeSuccess.style.display = 'none';
+            badgeError.style.display = 'none';
+            badgeWarning.style.display = 'none';
+            badgeExpired.style.display = 'none';
+            badgeCamera.style.display = 'none';
+
+            // Corners reference
+            const corners = targetReticle.querySelectorAll('.reticle-corner');
+
+            switch (state) {
+                case 'searching':
+                    hudTopLabel.textContent = 'CAMERA ACTIVE';
+                    hudStatusLabel.textContent = 'WAITING FOR QR CODE';
+                    hudStatusLabel.style.color = '#00bcd4';
+
+                    laserLine.style.display = 'block';
+                    laserLine.style.opacity = '1';
+
+                    reticleCrossH.style.opacity = '1';
+                    reticleCrossV.style.opacity = '1';
+
+                    targetReticle.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                    corners.forEach(c => c.style.borderColor = '#00bcd4');
+                    break;
+
+                case 'detected':
+                    hudTopLabel.textContent = 'CAMERA ACTIVE';
+                    hudStatusLabel.textContent = 'QR CODE DETECTED';
+                    hudStatusLabel.style.color = '#00b33c';
+
+                    // Stop laser line and trigger pulse
+                    laserLine.style.opacity = '0';
+                    setTimeout(() => { if (currentState !== 'searching') laserLine.style.display = 'none'; }, 200);
+
+                    targetReticle.classList.add('pulse');
+                    targetReticle.style.borderColor = 'rgba(0, 179, 60, 0.4)';
+                    corners.forEach(c => c.style.borderColor = '#00b33c');
+                    break;
+
+                case 'verifying':
+                    hudTopLabel.textContent = 'PROCESSING';
+                    hudStatusLabel.textContent = 'VERIFYING QR CODE...';
+                    hudStatusLabel.style.color = '#00bcd4';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    centerSpinner.style.display = 'block';
+
+                    targetReticle.style.transform = 'translate(-50%, -50%) scale(0.97)';
+                    targetReticle.style.borderColor = 'rgba(0, 188, 212, 0.5)';
+                    corners.forEach(c => c.style.borderColor = '#00bcd4');
+                    break;
+
+                case 'success':
+                    hudTopLabel.textContent = 'VERIFIED';
+                    hudStatusLabel.textContent = 'AUTHORIZATION CONFIRMED';
+                    hudStatusLabel.style.color = '#00b33c';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    badgeSuccess.style.display = 'flex';
+
+                    targetReticle.style.transform = 'translate(-50%, -50%) scale(1)';
+                    targetReticle.style.borderColor = 'rgba(0, 179, 60, 0.6)';
+                    corners.forEach(c => c.style.borderColor = '#00b33c');
+                    break;
+
+                case 'invalid':
+                    hudTopLabel.textContent = 'ERROR';
+                    hudStatusLabel.textContent = 'INVALID QR CODE';
+                    hudStatusLabel.style.color = '#c0405a';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    badgeError.style.display = 'flex';
+
+                    targetReticle.classList.add('shake');
+                    targetReticle.style.borderColor = 'rgba(192, 64, 90, 0.6)';
+                    corners.forEach(c => c.style.borderColor = '#c0405a');
+                    break;
+
+                case 'used':
+                    hudTopLabel.textContent = 'WARNING';
+                    hudStatusLabel.textContent = 'QR CODE ALREADY USED';
+                    hudStatusLabel.style.color = '#d97706';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    badgeWarning.style.display = 'flex';
+
+                    targetReticle.style.borderColor = 'rgba(217, 119, 6, 0.6)';
+                    corners.forEach(c => c.style.borderColor = '#d97706');
+                    break;
+
+                case 'expired':
+                    hudTopLabel.textContent = 'EXPIRED';
+                    hudStatusLabel.textContent = 'QR CODE EXPIRED';
+                    hudStatusLabel.style.color = '#d97706';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    badgeExpired.style.display = 'flex';
+
+                    targetReticle.style.borderColor = 'rgba(217, 119, 6, 0.6)';
+                    corners.forEach(c => c.style.borderColor = '#d97706');
+                    break;
+
+                case 'camera_error':
+                    hudTopLabel.textContent = 'HARDWARE';
+                    hudStatusLabel.textContent = 'CAMERA UNAVAILABLE';
+                    hudStatusLabel.style.color = '#94a3b8';
+
+                    laserLine.style.display = 'none';
+                    reticleCrossH.style.opacity = '0';
+                    reticleCrossV.style.opacity = '0';
+
+                    scannerDim.classList.add('active');
+                    badgeCamera.style.display = 'flex';
+
+                    targetReticle.style.borderColor = 'rgba(100, 116, 139, 0.5)';
+                    corners.forEach(c => c.style.borderColor = '#64748b');
+                    break;
+            }
+        }
+
+        // ── Simulated Verification Flow ──
+        // Simulates SEARCHING -> DETECTED (2s) -> VERIFYING (400ms) -> SUCCESS (1000ms)
+        function startSimulatedVerification() {
+            clearSimulationTimers();
+            setScannerState('searching');
+
+            simulationTimers.push(setTimeout(() => {
+                setScannerState('detected');
+
+                simulationTimers.push(setTimeout(() => {
+                    setScannerState('verifying');
+
+                    simulationTimers.push(setTimeout(() => {
+                        setScannerState('success');
+                    }, 1000));
+                }, 400));
+            }, 2000));
+        }
+
+        // ── Restart Scanner Function ──
+        function restartScanner() {
+            clearSimulationTimers();
+            setScannerState('searching');
+            startCamera();
+        }
+
+        // ── Double-Click & Key Controls for Seamless Testing ──
+        verificationCard.addEventListener('dblclick', function(e) {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'SELECT') {
+                return;
+            }
+            if (currentState === 'searching') {
+                startSimulatedVerification();
+            } else if (currentState === 'success') {
+                window.location.href = VOTING_DASHBOARD_URL;
+            } else {
+                restartScanner();
+            }
+        });
+
+        window.addEventListener('keydown', function(e) {
+            // Ignore if typing inside an input/select
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                return;
+            }
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                startSimulatedVerification();
+            } else if (e.key === '1') {
+                clearSimulationTimers(); setScannerState('searching');
+            } else if (e.key === '2') {
+                clearSimulationTimers(); setScannerState('detected');
+            } else if (e.key === '3') {
+                clearSimulationTimers(); setScannerState('verifying');
+            } else if (e.key === '4') {
+                clearSimulationTimers(); setScannerState('success');
+            } else if (e.key === '5') {
+                clearSimulationTimers(); setScannerState('invalid');
+            } else if (e.key === '6') {
+                clearSimulationTimers(); setScannerState('used');
+            } else if (e.key === '7') {
+                clearSimulationTimers(); setScannerState('expired');
+            } else if (e.key === '8') {
+                clearSimulationTimers(); setScannerState('camera_error');
+            } else if (e.key.toLowerCase() === 'r') {
+                restartScanner();
+            }
+        });
+
+        // ── Image Modal Controls ──
+        function openImageModal(imgSrc, caption) {
+            const overlay = document.getElementById('imageModalOverlay');
+            const img = document.getElementById('imageModalImg');
+            const cap = document.getElementById('imageModalCaption');
+            if (overlay && img && cap) {
+                img.src = imgSrc;
+                cap.textContent = caption;
+                overlay.classList.add('show');
+            }
+        }
+
+        function closeImageModal() {
+            const overlay = document.getElementById('imageModalOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+
+        // Initialize scanner in SEARCHING state with active camera feed
+        setScannerState('searching');
+        startCamera();
+    </script>
+</body>
+
+</html>
