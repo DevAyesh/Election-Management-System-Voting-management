@@ -371,8 +371,7 @@
     <div class="commission-container">
         <div class="commission-box">
             <div class="commission-content">
-                <img src="{% static 'voting/images/emblem.svg' %}"
-                    alt="Emblem" class="emblem">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Emblem" class="emblem">
                 <div class="text-content">
                     <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
                     <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
@@ -398,25 +397,30 @@
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
                 {% if chain_is_valid %}
-                <span style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #16a34a;color:#15803d;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:600;">
+                <span
+                    style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #16a34a;color:#15803d;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:600;">
                     &#9989; Ledger Verified
                 </span>
                 {% else %}
-                <a href="{% url 'chain_integrity' %}" style="display:inline-flex;align-items:center;gap:6px;background:#fff1f2;border:2px solid #dc2626;color:#b91c1c;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;">
+                <a href="{% url 'chain_integrity' %}"
+                    style="display:inline-flex;align-items:center;gap:6px;background:#fff1f2;border:2px solid #dc2626;color:#b91c1c;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:700;text-decoration:none;">
                     &#10060; Ledger Tampered — View Details
                 </a>
                 {% endif %}
-                <a href="{% url 'chain_integrity' %}" style="display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #781830;color:#781830;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;">
+                <a href="{% url 'chain_integrity' %}"
+                    style="display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #781830;color:#781830;padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;">
                     &#128274; View Blockchain
                 </a>
             </div>
         </div>
 
         {% if not chain_is_valid %}
-        <div style="background:#fff1f2;border:2px solid #dc2626;border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+        <div
+            style="background:#fff1f2;border:2px solid #dc2626;border-radius:8px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
             <span style="font-size:1.8rem;">&#10060;</span>
             <div>
-                <div style="font-weight:700;color:#b91c1c;font-size:1rem;">BLOCKCHAIN INTEGRITY FAILURE — Results May Be Unreliable</div>
+                <div style="font-weight:700;color:#b91c1c;font-size:1rem;">BLOCKCHAIN INTEGRITY FAILURE — Results May Be
+                    Unreliable</div>
                 <div style="font-size:0.85rem;color:#b91c1c;margin-top:3px;">{{ chain_error }}</div>
             </div>
         </div>
