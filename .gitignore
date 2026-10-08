@@ -13,7 +13,7 @@ media/asset_declarations
 media/candidate_photos
 media/form_a
 media/mp_proofs
-static/
+/static/
 
 # Environments
 .env
