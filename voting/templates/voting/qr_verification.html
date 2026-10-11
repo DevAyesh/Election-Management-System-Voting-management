@@ -6,6 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Election Commission - QR Voter Verification</title>
+    <!-- jsQR fallback for universal browser camera decoding -->
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -910,9 +912,14 @@
 <body>
 
     <!-- ── 1. Page Header (Exact Match with Voting Dashboard) ── -->
-    <div class="top-bar">
-        <a href="{% url 'voting_index' %}" class="home-icon" title="Ballot">🏠</a>
-        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <a href="{% url 'voting_index' %}" class="home-icon" title="Ballot">🏠</a>
+            <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+        </div>
+        <a href="{% url 'station_logout' %}" style="color: #c0405a; text-decoration: none; font-size: 0.82rem; font-weight: 700; padding: 5px 12px; border: 1.5px solid #c0405a; border-radius: 5px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;" onmouseover="this.style.background='#c0405a'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#c0405a';" title="End Station Session">
+            🚪 Logout / ඉවත් වන්න
+        </a>
     </div>
 
     <!-- Election Commission Box -->
@@ -1075,9 +1082,40 @@
                         <span class="status-dot-green">●</span> SCANNING
                     </div>
                     <div class="status-sub-text">Waiting for voter authorization QR code</div>
+
+                    <!-- Scanner Gun / Manual Token Input -->
+                    <div style="margin: 14px auto 8px; display: flex; gap: 8px; width: 100%; max-width: 440px;">
+                        <input type="text" id="manualQrInput" placeholder="Scan QR barcode gun or enter token..."
+                               style="flex: 1; padding: 10px 14px; border: 2px solid #00bcd4; border-radius: 6px; font-family: monospace; font-size: 0.85rem;"
+                               onkeydown="if(event.key==='Enter') submitManualQr();" autocomplete="off">
+                        <button type="button" onclick="submitManualQr()"
+                                style="background: #00bcd4; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">
+                            Verify
+                        </button>
+                    </div>
+
+                    {% if sample_qrs %}
+                    <div style="margin: 6px auto 12px; width: 100%; max-width: 440px; text-align: left;">
+                        <div style="font-size: 0.74rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">
+                            ⚡ Live MongoDB Tokens (Click to test):
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            {% for tok in sample_qrs %}
+                            <button type="button" onclick="testToken('{{ tok }}')"
+                                    style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; font-size: 0.72rem; font-family: monospace; cursor: pointer; color: #1e293b; transition: all 0.2s;"
+                                    onmouseover="this.style.borderColor='#00bcd4'; this.style.background='#ecfeff';"
+                                    onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
+                                    title="Verify against MongoDB: {{ tok }}">
+                                🔑 {{ tok|slice:":8" }}...
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="actions-strip">
                         <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Restart Scanner
+                            <span>↺</span> Restart Camera
                         </button>
                     </div>
                 </div>
@@ -1129,7 +1167,7 @@
                     <div class="feedback-state-box box-error">
                         <div class="state-icon">✕</div>
                         <div class="state-heading">INVALID QR CODE</div>
-                        <div class="state-desc">This QR code could not be verified.</div>
+                        <div class="state-desc" id="invalidDesc">This QR code could not be verified.</div>
                     </div>
                     <div class="actions-strip">
                         <button type="button" class="btn-secondary" onclick="restartScanner()">
@@ -1143,7 +1181,7 @@
                     <div class="feedback-state-box box-warning">
                         <div class="state-icon">⚠️</div>
                         <div class="state-heading">QR CODE ALREADY USED</div>
-                        <div class="state-desc">This authorization token has already been used.</div>
+                        <div class="state-desc" id="usedDesc">This authorization token has already been used.</div>
                     </div>
                     <div class="actions-strip">
                         <button type="button" class="btn-secondary" onclick="restartScanner()">
@@ -1513,9 +1551,140 @@
             }
         }
 
-        // ── Simulated Verification Flow ──
-        // Simulates SEARCHING -> DETECTED (2s) -> VERIFYING (400ms) -> SUCCESS (1000ms)
+        // ── Helper to retrieve Django CSRF Cookie ──
+        function getCsrfToken() {
+            const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+            return cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+        }
+
+        // ── Real Backend QR Token Verification Flow ──
+        async function verifyQrTokenBackend(token) {
+            if (!token) return;
+            clearSimulationTimers();
+            setScannerState('verifying');
+
+            try {
+                const resp = await fetch("{% url 'verify_qr_token' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    body: JSON.stringify({ qr_token: token.trim() })
+                });
+
+                const data = await resp.json();
+
+                if (data.status === 'success') {
+                    setScannerState('success');
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || VOTING_DASHBOARD_URL;
+                    }, 1200);
+                } else if (data.status === 'used') {
+                    setScannerState('used');
+                    const desc = document.getElementById('usedDesc');
+                    if (desc && data.message) desc.textContent = data.message;
+                } else if (data.status === 'invalid') {
+                    setScannerState('invalid');
+                    const desc = document.getElementById('invalidDesc');
+                    if (desc && data.message) desc.textContent = data.message;
+                } else {
+                    alert(data.message || 'Verification failed');
+                    setScannerState('searching');
+                }
+            } catch (err) {
+                console.error('QR Verification error:', err);
+                setScannerState('invalid');
+            }
+        }
+
+        function submitManualQr() {
+            const input = document.getElementById('manualQrInput');
+            if (input && input.value.trim()) {
+                verifyQrTokenBackend(input.value.trim());
+            }
+        }
+
+        function testToken(tok) {
+            const input = document.getElementById('manualQrInput');
+            if (input) input.value = tok;
+            verifyQrTokenBackend(tok);
+        }
+
+        // ── Native BarcodeDetector for live camera scanning ──
+        let barcodeDetector = null;
+        if ('BarcodeDetector' in window) {
+            try {
+                barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+            } catch (e) {
+                console.log('BarcodeDetector not available:', e);
+            }
+        }
+
+        let isFrameProcessing = false;
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+
+        async function scanVideoFrame() {
+            if (currentState !== 'searching' || !videoFeed || videoFeed.readyState < 2 || isFrameProcessing) {
+                if (cameraStream) requestAnimationFrame(scanVideoFrame);
+                return;
+            }
+
+            try {
+                let detectedCode = null;
+
+                // 1. Hardware BarcodeDetector
+                if (barcodeDetector) {
+                    try {
+                        const barcodes = await barcodeDetector.detect(videoFeed);
+                        if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                            detectedCode = barcodes[0].rawValue;
+                        }
+                    } catch (e) {}
+                }
+
+                // 2. jsQR library fallback
+                if (!detectedCode && typeof jsQR !== 'undefined' && videoFeed.videoWidth > 0) {
+                    offscreenCanvas.width = videoFeed.videoWidth;
+                    offscreenCanvas.height = videoFeed.videoHeight;
+                    offscreenCtx.drawImage(videoFeed, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                    const imgData = offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+                    const code = jsQR(imgData.data, imgData.width, imgData.height, {
+                        inversionAttempts: "dontInvert"
+                    });
+                    if (code && code.data) {
+                        detectedCode = code.data;
+                    }
+                }
+
+                if (detectedCode) {
+                    isFrameProcessing = true;
+                    setScannerState('detected');
+                    setTimeout(() => {
+                        verifyQrTokenBackend(detectedCode);
+                        isFrameProcessing = false;
+                    }, 400);
+                    return;
+                }
+            } catch (err) {}
+
+            if (cameraStream) {
+                requestAnimationFrame(scanVideoFrame);
+            }
+        }
+
+
+        // ── Simulated / Quick Verification Flow ──
         function startSimulatedVerification() {
+            {% if sample_qrs %}
+            const firstTok = "{{ sample_qrs.0 }}";
+            if (firstTok) {
+                verifyQrTokenBackend(firstTok);
+                return;
+            }
+            {% endif %}
+
             clearSimulationTimers();
             setScannerState('searching');
 
@@ -1527,9 +1696,12 @@
 
                     simulationTimers.push(setTimeout(() => {
                         setScannerState('success');
+                        setTimeout(() => {
+                            window.location.href = VOTING_DASHBOARD_URL;
+                        }, 1000);
                     }, 1000));
                 }, 400));
-            }, 2000));
+            }, 1000));
         }
 
         // ── Restart Scanner Function ──
@@ -1541,7 +1713,7 @@
 
         // ── Double-Click & Key Controls for Seamless Testing ──
         verificationCard.addEventListener('dblclick', function(e) {
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'SELECT') {
+            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') {
                 return;
             }
             if (currentState === 'searching') {
@@ -1611,6 +1783,10 @@
         // Initialize scanner in SEARCHING state with active camera feed
         setScannerState('searching');
         startCamera();
+        videoFeed.addEventListener('play', () => {
+            requestAnimationFrame(scanVideoFrame);
+        });
+
     </script>
 </body>
 

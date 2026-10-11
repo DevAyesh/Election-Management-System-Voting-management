@@ -28,13 +28,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options.get('dry_run', False)
 
-        uri = getattr(settings, 'MEMBER3_MONGO_URI', '') or os.environ.get('MEMBER3_MONGO_URI', '')
-        db_name = getattr(settings, 'MEMBER3_DB', '') or os.environ.get('MEMBER3_DB', '')
-        coll_name = getattr(settings, 'MEMBER3_COLLECTION', '') or os.environ.get('MEMBER3_COLLECTION', '')
+        uri = getattr(settings, 'ELECTION_MONGO_URI', '') or os.environ.get('ELECTION_MONGO_URI', '') or getattr(settings, 'MEMBER3_MONGO_URI', '')
+        db_name = getattr(settings, 'ELECTION_DB', '') or os.environ.get('ELECTION_DB', '') or getattr(settings, 'MEMBER3_DB', '')
+        coll_name = getattr(settings, 'ELECTION_COLLECTION', '') or os.environ.get('ELECTION_COLLECTION', '') or getattr(settings, 'MEMBER3_COLLECTION', '')
 
         if not uri or not db_name or not coll_name:
             self.stderr.write(self.style.ERROR(
-                "[ERROR] Missing configuration in .env. Ensure MEMBER3_MONGO_URI, MEMBER3_DB, and MEMBER3_COLLECTION are set."
+                "[ERROR] Missing configuration in .env. Ensure ELECTION_MONGO_URI, ELECTION_DB, and ELECTION_COLLECTION are set."
             ))
             return
 

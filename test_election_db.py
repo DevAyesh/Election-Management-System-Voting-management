@@ -23,17 +23,17 @@ def main():
     except Exception:
         pass
 
-    uri = os.environ.get("MEMBER3_MONGO_URI", "").strip()
-    db_name = os.environ.get("MEMBER3_DB", "").strip()
-    coll_name = os.environ.get("MEMBER3_COLLECTION", "").strip()
+    uri = (os.environ.get("ELECTION_MONGO_URI") or os.environ.get("MEMBER3_MONGO_URI") or "").strip()
+    db_name = (os.environ.get("ELECTION_DB") or os.environ.get("MEMBER3_DB") or "").strip()
+    coll_name = (os.environ.get("ELECTION_COLLECTION") or os.environ.get("MEMBER3_COLLECTION") or "").strip()
 
     missing = []
     if not uri:
-        missing.append("MEMBER3_MONGO_URI")
+        missing.append("ELECTION_MONGO_URI")
     if not db_name:
-        missing.append("MEMBER3_DB")
+        missing.append("ELECTION_DB")
     if not coll_name:
-        missing.append("MEMBER3_COLLECTION")
+        missing.append("ELECTION_COLLECTION")
 
     if missing:
         print("[CONFIG ERROR] The following required variables in .env are empty or missing:")
@@ -42,7 +42,7 @@ def main():
         print("\nPlease populate these variables in your .env file before running this test.")
         sys.exit(1)
 
-    print("[1/4] Connecting to Member 3 MongoDB Atlas cluster (timeout = 5000ms)...")
+    print("[1/4] Connecting to Central Election MongoDB Atlas cluster (timeout = 5000ms)...")
 
     try:
         client = pymongo.MongoClient(uri, serverSelectionTimeoutMS=5000)

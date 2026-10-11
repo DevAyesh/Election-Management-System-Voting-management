@@ -316,9 +316,6 @@
             <div class="tab {% if active_tab == 'results' %}active{% endif %}" onclick="switchTab('results')">
                 📈 Station Results
             </div>
-            <div class="tab {% if active_tab == 'admin' %}active{% endif %}" onclick="switchTab('admin')">
-                📊 Global Admin
-            </div>
         </div>
 
         <div class="login-body">
@@ -405,51 +402,6 @@
                 </div>
             </div>
 
-            <!-- ADMIN LOGIN FORM -->
-            <div id="admin-form" class="form-section {% if active_tab == 'admin' %}active{% endif %}">
-                <div class="login-title">
-                    <h2>පරිපාලක පිවිසුම</h2>
-                    <p>Global Results & Admin Access</p>
-                </div>
-
-                <form method="post" action="{% url 'login' %}" onsubmit="setLoading(this)">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <label for="id_username" class="form-label">
-                            <span class="icon">👤</span>Username / පරිශීලක නාමය
-                        </label>
-                        <input type="text" name="username" id="id_username" class="form-input"
-                            placeholder="Enter admin username" required {% if active_tab == 'admin' %}autofocus{% endif %}>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="id_password" class="form-label">
-                            <span class="icon">🔒</span>Password / මුරපදය
-                        </label>
-                        <div class="input-wrap">
-                            <input type="password" name="password" id="id_password" class="form-input"
-                                placeholder="Enter admin password" required>
-                            <button type="button" class="toggle-vis" onclick="togglePassword('id_password', this)" title="Show / Hide">👁</button>
-                        </div>
-                    </div>
-                    
-                    <input type="hidden" name="next" value="{{ next }}">
-
-                    <button type="submit" class="btn-login">
-                        පිවිසෙන්න / Secure Login
-                    </button>
-                </form>
-
-                <div class="login-footer">
-                    <div class="footer-text">
-                        <span class="footer-icon">🔒</span> Secure authentication for authorized personnel only
-                    </div>
-                    <div class="footer-text" style="margin-top: 6px;">
-                        හිමිකාරීත්වය සහිත පුද්ගලයන් සඳහා පමණි
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
@@ -463,16 +415,15 @@
             // Update forms
             document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
             const targetForm = document.getElementById(tabId + '-form');
-            targetForm.classList.add('active');
+            if (targetForm) targetForm.classList.add('active');
             
             // Focus appropriate input
-            if(tabId === 'station') {
-                document.getElementById('login_key').focus();
-                // Update URL history state without reloading
-                window.history.replaceState({}, '', '{% url "station_login" %}');
-            } else {
-                document.getElementById('id_username').focus();
-                window.history.replaceState({}, '', '{% url "login" %}');
+            if (tabId === 'station') {
+                const el = document.getElementById('login_key');
+                if (el) el.focus();
+            } else if (tabId === 'results') {
+                const el = document.getElementById('results_key');
+                if (el) el.focus();
             }
         }
 

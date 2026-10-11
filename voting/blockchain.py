@@ -1,4 +1,4 @@
-﻿import hashlib
+import hashlib
 import json
 from datetime import datetime, timezone
 
@@ -15,10 +15,13 @@ def compute_block_hash(block_index, station_code, voted_at_iso, ballot_hash, pre
     raw = f'{block_index}|{station_code}|{voted_at_iso}|{ballot_hash}|{previous_hash}'
     return _sha256_hex(raw)
 
-def build_block_fields(block_index, station_code, voted_at, preferences, previous_hash):
-    if voted_at.tzinfo is None:
-        voted_at = voted_at.replace(tzinfo=timezone.utc)
-    voted_at_iso = voted_at.isoformat()
+def build_block_fields(block_index, station_code, preferences, previous_hash, voted_at=None):
+    if voted_at is not None:
+        if voted_at.tzinfo is None:
+            voted_at = voted_at.replace(tzinfo=timezone.utc)
+        voted_at_iso = voted_at.isoformat()
+    else:
+        voted_at_iso = ''
     ballot_hash = compute_ballot_hash(preferences)
     block_hash = compute_block_hash(block_index, station_code, voted_at_iso, ballot_hash, previous_hash)
     return {

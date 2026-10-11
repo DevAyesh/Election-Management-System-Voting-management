@@ -2,36 +2,166 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from functools import wraps
 from candidates.models import Candidate
-from .models import Vote, PollingStation, TempVoterId, AuditLog, BlockchainBlock
+from .models import Vote, PollingStation, AuditLog, BlockchainBlock
 import json
 import threading
+import pymongo
+import re
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 from cryptography.fernet import Fernet
-from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from django.contrib.auth.signals import user_logged_in
-from django.contrib.auth.models import update_last_login
 from django.utils import timezone
 from .blockchain import build_block_fields, get_chain_tip_hash, get_next_block_index
+
+try:
+    import dns.resolver
+    dns.resolver.default_resolver = dns.resolver.Resolver()
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+except Exception:
+    pass
 
 # Serialise blockchain block creation within a process to prevent duplicate indices
 _blockchain_lock = threading.Lock()
 
-# Disconnect the default update_last_login signal to prevent MongoDB ObjectId save error
-user_logged_in.disconnect(update_last_login)
-
 # Initialize Fernet
 cipher_suite = Fernet(settings.ENCRYPTION_KEY.encode())
-
-# Fallback credentials for MongoDB deployments where updating Django auth users can fail.
-FALLBACK_RESULTS_USERNAME = "admin"
-FALLBACK_RESULTS_PASSWORD = "admin"
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_qr_mongo_client = None
+
+UUID_REGEX = re.compile(r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}')
+
+def _get_qr_database():
+    """Returns the MongoDB database for QR verification."""
+    global _qr_mongo_client
+    if not getattr(settings, 'QR_MONGO_URI', None):
+        return None
+    try:
+        if _qr_mongo_client is None:
+            _qr_mongo_client = pymongo.MongoClient(
+                settings.QR_MONGO_URI,
+                serverSelectionTimeoutMS=10000,
+                connectTimeoutMS=10000,
+            )
+        return _qr_mongo_client[settings.QR_DB]
+    except Exception as exc:
+        print(f"[QR DB ERROR] Could not connect to QR Mongo cluster: {exc}")
+        _qr_mongo_client = None
+        return None
+
+def _get_qr_collection():
+    """Returns the MongoDB collection for QR code verification, reusing client connection."""
+    db = _get_qr_database()
+    if db is None:
+        return None
+    try:
+        existing = db.list_collection_names()
+        coll_name = settings.QR_COLLECTION
+        if coll_name in existing:
+            return db[coll_name]
+        if 'qr_codes' in existing:
+            return db['qr_codes']
+        if 'qr_code' in existing:
+            return db['qr_code']
+        return db[coll_name]
+    except Exception as exc:
+        print(f"[QR DB ERROR] Could not get collection: {exc}")
+        return None
+
+def _resolve_qr_document(raw_input):
+    """
+    Intelligently resolves a QR document from raw input in any format:
+    1. Direct UUID string (e.g. 720daa51-7a05-4de6-9dab-49abc649e7b5)
+    2. URL containing a UUID token
+    3. JSON payload containing {'qr_token': '...'}, {'token': '...'}, or {'id': '...'}
+    4. JSON payload containing {'nic': '...'} (resolved via verification_logs)
+    5. Raw NIC string (e.g. 200200302540)
+    """
+    db = _get_qr_database()
+    if db is None:
+        return None, None
+    coll = _get_qr_collection()
+    if coll is None:
+        return None, None
+
+    raw = raw_input.strip()
+
+    # 1. Direct match on qr_token
+    doc = coll.find_one({'qr_token': raw})
+    if doc:
+        return doc, doc.get('qr_token')
+
+    # 2. Extract UUID pattern from string or URL
+    uuid_match = UUID_REGEX.search(raw)
+    if uuid_match:
+        token = uuid_match.group(0)
+        doc = coll.find_one({'qr_token': token})
+        if doc:
+            return doc, token
+
+    # 3. Check if raw input is JSON
+    parsed_json = None
+    if (raw.startswith('{') and raw.endswith('}')) or (raw.startswith('[') and raw.endswith(']')):
+        try:
+            parsed_json = json.loads(raw)
+        except Exception:
+            pass
+
+    if isinstance(parsed_json, dict):
+        for field in ['qr_token', 'token', 'token_id', 'id', 'uuid']:
+            val = parsed_json.get(field)
+            if val:
+                val_str = str(val).strip()
+                doc = coll.find_one({'qr_token': val_str})
+                if doc:
+                    return doc, doc.get('qr_token')
+                uuid_m = UUID_REGEX.search(val_str)
+                if uuid_m:
+                    doc = coll.find_one({'qr_token': uuid_m.group(0)})
+                    if doc:
+                        return doc, doc.get('qr_token')
+
+        nic = parsed_json.get('nic') or parsed_json.get('NIC') or parsed_json.get('nic_no')
+        if nic:
+            doc = _find_qr_by_nic(db, coll, str(nic).strip())
+            if doc:
+                return doc, doc.get('qr_token')
+
+    # 4. Check if raw input itself is an NIC number
+    clean_nic = raw.replace('"', '').replace("'", "").strip()
+    if re.match(r'^[0-9]{9,12}[vVxX]?$', clean_nic):
+        doc = _find_qr_by_nic(db, coll, clean_nic)
+        if doc:
+            return doc, doc.get('qr_token')
+
+    return None, None
+
+def _find_qr_by_nic(db, qr_coll, nic):
+    """Finds the corresponding qr_codes document linked to an NIC's verification log."""
+    try:
+        # Check direct NIC field on qr_codes if present
+        direct_doc = qr_coll.find_one({'nic': nic})
+        if direct_doc:
+            return direct_doc
+
+        vlog = db['verification_logs'].find_one({'nic': nic, 'verified': True}, sort=[('_id', -1)])
+        if not vlog:
+            vlog = db['verification_logs'].find_one({'nic': nic}, sort=[('_id', -1)])
+        if vlog:
+            doc = qr_coll.find_one({'_id': {'$gte': vlog['_id']}}, sort=[('_id', 1)])
+            if doc:
+                return doc
+    except Exception as e:
+        print(f"[NIC RESOLUTION ERROR] {e}")
+    return None
+
+
+
 
 def _get_client_ip(request):
     xff = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -55,15 +185,6 @@ def _write_audit(event_type, request=None, station_name=None, details=''):
 # ---------------------------------------------------------------------------
 # Auth decorators
 # ---------------------------------------------------------------------------
-
-def results_login_required(view_func):
-    """Requires the super-admin session (results admin)."""
-    @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
-        if request.user.is_authenticated or request.session.get('results_admin_authenticated'):
-            return view_func(request, *args, **kwargs)
-        return redirect(f"{settings.LOGIN_URL}?next={request.path}")
-    return _wrapped
 
 
 def station_login_required(view_func):
@@ -278,7 +399,7 @@ def submit_vote(request):
         json_str       = json.dumps(preferences)
         encrypted_data = cipher_suite.encrypt(json_str.encode()).decode()
 
-        # Store vote with station tag
+        # Store vote with station tag — NO timestamp to preserve 100% voter privacy & anonymity
         vote_obj = Vote.objects.create(
             preferences=encrypted_data,
             polling_station=station_name,
@@ -293,11 +414,9 @@ def submit_vote(request):
             with _blockchain_lock:
                 next_index    = get_next_block_index(BlockchainBlock)
                 prev_hash     = get_chain_tip_hash(BlockchainBlock)
-                voted_at_utc  = vote_obj.voted_at  # auto_now_add DateTimeField
                 block_fields  = build_block_fields(
                     block_index   = next_index,
                     station_code  = station_code,
-                    voted_at      = voted_at_utc,
                     preferences   = preferences,
                     previous_hash = prev_hash,
                 )
@@ -314,6 +433,17 @@ def submit_vote(request):
             station_name=station_name,
             details=f"Vote cast at station {station_code} | chain block #{next_index}",
         )
+
+        # Mark verified QR token as used in MongoDB Atlas
+        voter_qr_token = request.session.get('voter_qr_token')
+        if voter_qr_token:
+            try:
+                coll = _get_qr_collection()
+                if coll:
+                    coll.update_one({'qr_token': voter_qr_token}, {'$set': {'used': True}})
+            except Exception as q_err:
+                print(f"[QR CONSUME ERROR] Could not mark QR token used: {q_err}")
+            request.session.pop('voter_qr_token', None)
 
         # Reset lock — terminal is ready for the NEXT voter
         request.session['vote_in_progress'] = False
@@ -413,7 +543,6 @@ def qr_verification(request):
     """
     Voter QR Code Optical Verification Window.
     Displayed after polling station key authentication to scan issued voter tokens.
-    Double-clicking anywhere on the window authorizes the voter and opens the voting ballot.
     """
     station_name = request.session.get('polling_station_name', '')
     station_district = request.session.get('polling_station_district', '')
@@ -426,13 +555,102 @@ def qr_verification(request):
     div_abbr = station_division[:3].upper() if station_division else '01'
     terminal_code = f"SL-EC-{dist_abbr}-{div_abbr}-VOTING-01"
 
+    # Fetch available unused QR codes for quick operator selection/testing
+    sample_qrs = []
+    try:
+        coll = _get_qr_collection()
+        if coll:
+            sample_qrs = [doc.get('qr_token') for doc in coll.find({'used': False}).limit(10) if doc.get('qr_token')]
+    except Exception as e:
+        print(f"[QR FETCH ERROR] {e}")
+
     return render(request, 'voting/qr_verification.html', {
         'station_name': station_name,
         'station_district': station_district,
         'station_division': station_division,
         'terminal_code': terminal_code,
         'expiry_timestamp': expiry_timestamp,
+        'sample_qrs': sample_qrs,
     })
+
+
+@station_login_required
+def verify_qr_token(request):
+    """
+    AJAX endpoint to verify a scanned or entered QR token against MongoDB
+    Election_Management_System.qr_codes collection.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        raw_token = data.get('qr_token', '').strip()
+        if not raw_token:
+            return JsonResponse({'status': 'invalid', 'message': 'QR token is empty'}, status=400)
+
+        coll = _get_qr_collection()
+        if coll is None:
+            return JsonResponse({'status': 'error', 'message': 'QR Database connection failed'}, status=500)
+
+        # Resolve document from raw token, UUID pattern, JSON payload, or NIC
+        doc, token_str = _resolve_qr_document(raw_token)
+        if not doc:
+            _write_audit(
+                AuditLog.EventType.LOGIN_FAILED,
+                request=request,
+                station_name=request.session.get('polling_station_name'),
+                details=f"Unrecognized QR token scanned: {raw_token[:16]}***",
+            )
+            return JsonResponse({
+                'status': 'invalid',
+                'message': 'QR කේතය හඳුනාගත නොහැක / Invalid or Unrecognized QR Code',
+            })
+
+        actual_token = doc.get('qr_token') or token_str
+
+        if doc.get('used') is True:
+            _write_audit(
+                AuditLog.EventType.LOGIN_FAILED,
+                request=request,
+                station_name=request.session.get('polling_station_name'),
+                details=f"Attempted reuse of QR token: {actual_token[:8]}***",
+            )
+            return JsonResponse({
+                'status': 'used',
+                'message': 'මෙම QR කේතය දැනටමත් භාවිතා කර ඇත / QR Code Already Used',
+            })
+
+        # Token is valid and unused! Mark as used immediately in MongoDB Atlas
+        try:
+            coll.update_one({'_id': doc['_id']}, {'$set': {'used': True}})
+            if actual_token:
+                coll.update_one({'qr_token': actual_token}, {'$set': {'used': True}})
+        except Exception as up_err:
+            print(f"[QR UPDATE ERROR] Failed to mark QR as used in MongoDB: {up_err}")
+
+        # Store in session
+        request.session['voter_qr_token'] = actual_token
+        request.session.save()
+
+        _write_audit(
+            AuditLog.EventType.STATION_LOGIN,
+            request=request,
+            station_name=request.session.get('polling_station_name'),
+            details=f"Voter QR token verified and marked used: {actual_token[:8]}***",
+        )
+
+        return JsonResponse({
+            'status': 'success',
+            'token': actual_token,
+            'message': 'අනුමත කරන ලදී / Authorization Confirmed',
+            'redirect_url': '/voting/',
+        })
+
+
+    except Exception as exc:
+        return JsonResponse({'status': 'error', 'message': str(exc)}, status=500)
+
 
 
 # ---------------------------------------------------------------------------
@@ -506,366 +724,10 @@ def station_results(request):
 
 
 # ---------------------------------------------------------------------------
-# Global results (super-admin) — unchanged + per-station breakdown
-# ---------------------------------------------------------------------------
-
-@results_login_required
-def results(request):
-    candidates_qs = Candidate.objects.all()
-    results_data  = []
-    all_votes     = Vote.objects.all()
-
-    decrypted_votes = []
-    for vote in all_votes:
-        try:
-            decrypted_data = cipher_suite.decrypt(vote.preferences.encode()).decode()
-            decrypted_votes.append({
-                'prefs': json.loads(decrypted_data),
-                'station': vote.polling_station or 'Unknown',
-            })
-        except Exception as e:
-            print(f"Error decrypting vote: {e}")
-            continue
-
-    # Aggregate by station
-    station_breakdown = {}
-    for entry in decrypted_votes:
-        stn = entry['station']
-        if stn not in station_breakdown:
-            station_breakdown[stn] = {}
-
-    for candidate in candidates_qs:
-        c_id   = str(candidate.id)
-        counts = {1: 0, 2: 0, 3: 0}
-        for entry in decrypted_votes:
-            prefs = entry['prefs']
-            stn   = entry['station']
-            name  = candidate.ballot_name or candidate.full_name
-
-            for pref_rank in [1, 2, 3]:
-                if prefs.get(str(pref_rank)) == c_id:
-                    counts[pref_rank] += 1
-                    # Station breakdown
-                    if name not in station_breakdown[stn]:
-                        station_breakdown[stn][name] = {1: 0, 2: 0, 3: 0}
-                    station_breakdown[stn][name][pref_rank] += 1
-
-        symbol_filename = get_party_symbol(candidate.party_name)
-        results_data.append({
-            'name': candidate.ballot_name or candidate.full_name,
-            'party': candidate.party_name or 'Independent',
-            'color': get_party_color(candidate.party_name),
-            'party_symbol_url': (
-                f"{settings.MEDIA_URL}party_symbols/{symbol_filename}" if symbol_filename else None
-            ),
-            'counts': counts,
-            'total_1st': counts[1],
-        })
-
-    results_data.sort(key=lambda x: x['total_1st'], reverse=True)
-
-    # Chain integrity check
-    from .blockchain import verify_chain as _verify_chain
-    chain_is_valid, chain_error = _verify_chain(BlockchainBlock.objects.order_by('block_index'))
-
-    return render(request, 'voting/results.html', {
-        'results': results_data,
-        'station_breakdown': station_breakdown,
-        'chain_is_valid': chain_is_valid,
-        'chain_error': chain_error,
-    })
-
-
-
-# ---------------------------------------------------------------------------
 # Success page
 # ---------------------------------------------------------------------------
 
 def success(request):
+    """Render the vote confirmation screen."""
     return render(request, 'voting/success.html')
 
-
-# ---------------------------------------------------------------------------
-# Blockchain chain integrity API + dashboard
-# ---------------------------------------------------------------------------
-
-@results_login_required
-def chain_integrity_api(request):
-    """
-    JSON endpoint: verify the entire blockchain and return a status summary.
-    Used by the dashboard and can be polled by monitoring scripts.
-    """
-    from .blockchain import verify_chain as _verify_chain
-    blocks_qs  = BlockchainBlock.objects.order_by('block_index')
-    total      = blocks_qs.count()
-    is_valid, error_detail = _verify_chain(blocks_qs)
-
-    return JsonResponse({
-        'is_valid':     is_valid,
-        'total_blocks': total,
-        'error_detail': error_detail,
-    })
-
-
-@results_login_required
-def chain_integrity_page(request):
-    """
-    HTML dashboard: renders the full blockchain ledger with a tamper indicator.
-    """
-    from .blockchain import verify_chain as _verify_chain
-    blocks_qs      = BlockchainBlock.objects.order_by('block_index')
-    blocks         = list(blocks_qs)
-    total          = len(blocks)
-    is_valid, error_detail = _verify_chain(iter(blocks))
-
-    # Identify the first bad block for highlighting
-    bad_index = None
-    if not is_valid and error_detail:
-        import re
-        m = re.search(r'Block (\d+)', error_detail)
-        if m:
-            bad_index = int(m.group(1))
-
-    return render(request, 'voting/chain_integrity.html', {
-        'blocks':       blocks,
-        'total':        total,
-        'is_valid':     is_valid,
-        'error_detail': error_detail,
-        'bad_index':    bad_index,
-    })
-
-
-
-
-
-# ---------------------------------------------------------------------------
-# Results admin login / logout
-# ---------------------------------------------------------------------------
-
-def user_login(request):
-    """Handle user login with MongoDB-compatible session management."""
-    if request.user.is_authenticated:
-        return redirect('voting_index')
-
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-
-        if username == FALLBACK_RESULTS_USERNAME and password == FALLBACK_RESULTS_PASSWORD:
-            request.session['results_admin_authenticated'] = True
-            request.session.save()
-            next_url = request.POST.get('next') or request.GET.get('next') or 'results'
-            return redirect(next_url)
-
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            from django.contrib.auth import SESSION_KEY, BACKEND_SESSION_KEY, HASH_SESSION_KEY
-            request.session.flush()
-            request.session[SESSION_KEY]         = user._get_pk_val()
-            request.session[BACKEND_SESSION_KEY] = user.backend
-            request.session[HASH_SESSION_KEY]    = user.get_session_auth_hash()
-            request.session.cycle_key()
-            try:
-                user.last_login = timezone.now()
-                user.save()
-            except Exception as e:
-                print(f"Warning: Could not update last_login: {e}")
-            request.session.save()
-            request.user = user
-            next_url = request.POST.get('next') or request.GET.get('next') or 'voting_index'
-            return redirect(next_url)
-        else:
-            messages.error(request, 'Invalid username or password. Please try again.')
-
-    return render(request, 'voting/login.html', {'active_tab': 'admin'})
-
-
-def user_logout(request):
-    request.session.pop('results_admin_authenticated', None)
-    logout(request)
-    messages.success(request, 'You have been successfully logged out.')
-    return redirect('login')
-
-
-# ---------------------------------------------------------------------------
-# Temporary Voter ID management (stub for real ID system)
-# ---------------------------------------------------------------------------
-
-def _admin_required(view_func):
-    """Requires results admin session."""
-    @wraps(view_func)
-    def _wrapped(request, *args, **kwargs):
-        if request.user.is_authenticated or request.session.get('results_admin_authenticated'):
-            return view_func(request, *args, **kwargs)
-        return redirect(f"{settings.LOGIN_URL}?next={request.path}")
-    return _wrapped
-
-
-@_admin_required
-def voter_id_list(request):
-    """List all temporary voter IDs with search/filter."""
-    query    = request.GET.get('q', '')
-    district = request.GET.get('district', '')
-    division = request.GET.get('division', '')
-    has_voted = request.GET.get('has_voted', '')
-
-    voters = TempVoterId.objects.all()
-    if query:
-        voters = [v for v in voters if query.lower() in v.voter_id.lower() or query.lower() in v.full_name.lower()]
-    if district:
-        voters = [v for v in voters if v.district == district]
-    if division:
-        voters = [v for v in voters if v.division == division]
-    if has_voted == 'yes':
-        voters = [v for v in voters if v.has_voted]
-    elif has_voted == 'no':
-        voters = [v for v in voters if not v.has_voted]
-
-    # Distinct districts/divisions for filter dropdowns
-    all_voters  = TempVoterId.objects.all()
-    districts   = sorted(set(v.district for v in all_voters))
-    divisions   = sorted(set(v.division for v in all_voters))
-
-    total = TempVoterId.objects.all().count()
-    voted = sum(1 for v in TempVoterId.objects.all() if v.has_voted)
-
-    return render(request, 'voting/voter_id_list.html', {
-        'voters':    voters,
-        'query':     query,
-        'district':  district,
-        'division':  division,
-        'has_voted': has_voted,
-        'districts': districts,
-        'divisions': divisions,
-        'total':     total,
-        'voted':     voted,
-    })
-
-
-@_admin_required
-def voter_id_create(request):
-    """Create a single temporary voter ID."""
-    # Build district/division choices from polling stations
-    stations  = PollingStation.objects.filter(is_active=True)
-    districts = sorted(set((s.district_number, s.district_name) for s in stations), key=lambda x: x[0])
-    divisions_by_district = {}
-    for s in stations:
-        divisions_by_district.setdefault(s.district_name, []).append(s.division_name)
-
-    if request.method == 'POST':
-        voter_id  = request.POST.get('voter_id', '').strip().upper()
-        full_name = request.POST.get('full_name', '').strip()
-        district  = request.POST.get('district', '').strip()
-        division  = request.POST.get('division', '').strip()
-
-        if not all([voter_id, full_name, district, division]):
-            messages.error(request, 'All fields are required.')
-        elif TempVoterId.objects.filter(voter_id=voter_id).first():
-            messages.error(request, f'Voter ID "{voter_id}" already exists.')
-        else:
-            TempVoterId.objects.create(
-                voter_id=voter_id,
-                full_name=full_name,
-                district=district,
-                division=division,
-            )
-            _write_audit(
-                AuditLog.EventType.VOTER_CREATED,
-                request=request,
-                details=f"Created voter ID: {voter_id} ({full_name})",
-            )
-            messages.success(request, f'Voter ID "{voter_id}" created successfully.')
-            return redirect('voter_id_list')
-
-    return render(request, 'voting/voter_id_form.html', {
-        'districts': districts,
-        'divisions_json': json.dumps(divisions_by_district),
-        'action': 'Create',
-    })
-
-
-@_admin_required
-def voter_id_bulk(request):
-    """Bulk create voter IDs from a pasted CSV block."""
-    stations  = PollingStation.objects.filter(is_active=True)
-    districts = sorted(set((s.district_number, s.district_name) for s in stations), key=lambda x: x[0])
-    divisions_by_district = {}
-    for s in stations:
-        divisions_by_district.setdefault(s.district_name, []).append(s.division_name)
-
-    if request.method == 'POST':
-        raw_data = request.POST.get('bulk_data', '')
-        district = request.POST.get('district', '').strip()
-        division = request.POST.get('division', '').strip()
-
-        created = 0
-        skipped = 0
-        errors  = []
-
-        for line_num, line in enumerate(raw_data.strip().splitlines(), 1):
-            parts = [p.strip() for p in line.split(',')]
-            if len(parts) < 2:
-                errors.append(f"Line {line_num}: need at least voter_id, full_name")
-                skipped += 1
-                continue
-            voter_id  = parts[0].upper()
-            full_name = parts[1]
-            # Allow overriding district/division per line
-            row_district = parts[2] if len(parts) > 2 else district
-            row_division  = parts[3] if len(parts) > 3 else division
-
-            if not voter_id or not full_name:
-                skipped += 1
-                continue
-
-            if TempVoterId.objects.filter(voter_id=voter_id).first():
-                skipped += 1
-                continue
-
-            try:
-                TempVoterId.objects.create(
-                    voter_id=voter_id,
-                    full_name=full_name,
-                    district=row_district,
-                    division=row_division,
-                )
-                created += 1
-            except Exception as e:
-                errors.append(f"Line {line_num}: {e}")
-                skipped += 1
-
-        if created:
-            _write_audit(
-                AuditLog.EventType.VOTER_CREATED,
-                request=request,
-                details=f"Bulk created {created} voter IDs",
-            )
-            messages.success(request, f'Created {created} voter ID(s). Skipped {skipped}.')
-        else:
-            messages.warning(request, f'No records created. Skipped {skipped}.')
-
-        if errors:
-            messages.error(request, 'Errors: ' + '; '.join(errors[:5]))
-
-        return redirect('voter_id_list')
-
-    return render(request, 'voting/voter_id_bulk.html', {
-        'districts': districts,
-        'divisions_json': json.dumps(divisions_by_district),
-    })
-
-
-@_admin_required
-def voter_id_delete(request, voter_id):
-    """Delete a single voter ID."""
-    voter = get_object_or_404(TempVoterId, voter_id=voter_id)
-    if request.method == 'POST':
-        _write_audit(
-            AuditLog.EventType.VOTER_DELETED,
-            request=request,
-            details=f"Deleted voter ID: {voter.voter_id} ({voter.full_name})",
-        )
-        voter.delete()
-        messages.success(request, f'Voter ID "{voter_id}" deleted.')
-        return redirect('voter_id_list')
-    return render(request, 'voting/voter_id_confirm_delete.html', {'voter': voter})

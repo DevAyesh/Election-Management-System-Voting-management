@@ -28,10 +28,29 @@ try:
 except Exception:
     pass
 
-# Member 3 Read-only MongoDB Connection Settings
-MEMBER3_MONGO_URI = os.environ.get("MEMBER3_MONGO_URI", "")
-MEMBER3_DB = os.environ.get("MEMBER3_DB", "")
-MEMBER3_COLLECTION = os.environ.get("MEMBER3_COLLECTION", "")
+# Central Election MongoDB Connection Settings
+ELECTION_MONGO_URI = (
+    os.environ.get("ELECTION_MONGO_URI") or
+    os.environ.get("MONGODB_URI") or
+    os.environ.get("MEMBER3_MONGO_URI") or
+    ""
+)
+ELECTION_DB = os.environ.get("ELECTION_DB") or os.environ.get("MEMBER3_DB") or "election"
+ELECTION_COLLECTION = (
+    os.environ.get("ELECTION_COLLECTION") or
+    os.environ.get("MEMBER3_COLLECTION") or
+    "candidates"
+)
+
+# Backward-compatibility alias
+MEMBER3_MONGO_URI = ELECTION_MONGO_URI
+MEMBER3_DB = ELECTION_DB
+MEMBER3_COLLECTION = ELECTION_COLLECTION
+
+# QR Verification MongoDB Connection Settings
+QR_MONGO_URI = os.environ.get("QR_MONGO_URI", "")
+QR_DB = os.environ.get("QR_DB", "Election_Management_System")
+QR_COLLECTION = os.environ.get("QR_COLLECTION", "qr_codes")
 
 
 # Quick-start development settings - unsuitable for production
@@ -110,9 +129,10 @@ WSGI_APPLICATION = 'election_portal.wsgi.application'
 from django_mongodb_backend import parse_uri
 
 _default_mongo_uri = (
+    os.environ.get('ELECTION_MONGO_URI') or
     os.environ.get('MONGODB_URI') or
     os.environ.get('MEMBER3_MONGO_URI') or
-    'mongodb+srv://user:123@cluster0.qdf1iz9.mongodb.net/election'
+    'mongodb+srv://admin:123@cluster0.ftlxeqs.mongodb.net/election?appName=Cluster0'
 )
 try:
     DATABASES = {
@@ -175,6 +195,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
 # Authentication Settings
-LOGIN_URL = '/voting/login/'
+LOGIN_URL = '/voting/station/login/'
 LOGIN_REDIRECT_URL = '/voting/'
-LOGOUT_REDIRECT_URL = '/voting/login/'
+LOGOUT_REDIRECT_URL = '/voting/station/login/'

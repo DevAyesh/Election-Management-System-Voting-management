@@ -31,8 +31,7 @@ class Vote(models.Model):
     id              = ObjectIdAutoField(primary_key=True)
     preferences     = models.TextField()                                  # Fernet-encrypted JSON
     polling_station = models.CharField(max_length=200, null=True, blank=True)  
-    station_code    = models.CharField(max_length=20,  null=True, blank=True)  
-    voted_at        = models.DateTimeField(auto_now_add=True)
+    station_code    = models.CharField(max_length=20,  null=True, blank=True)
 
     class Meta:
         db_table = 'vote'
