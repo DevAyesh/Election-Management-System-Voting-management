@@ -12,9 +12,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env
+load_dotenv(BASE_DIR / '.env')
+
+# Resilient DNS resolver for Windows MongoDB Atlas SRV lookups
+try:
+    import dns.resolver
+    dns.resolver.default_resolver = dns.resolver.Resolver()
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+except Exception:
+    pass
+
+# Member 3 Read-only MongoDB Connection Settings
+MEMBER3_MONGO_URI = os.environ.get("MEMBER3_MONGO_URI", "")
+MEMBER3_DB = os.environ.get("MEMBER3_DB", "")
+MEMBER3_COLLECTION = os.environ.get("MEMBER3_COLLECTION", "")
 
 
 # Quick-start development settings - unsuitable for production
@@ -63,9 +80,9 @@ MIDDLEWARE = [
     'voting.middleware.RateLimitMiddleware',
 ]
 
-# Rate limiting settings
-RATE_LIMIT_STATION_LOGIN  = 5    # max failed attempts before lockout
-RATE_LIMIT_WINDOW_SECONDS = 600  # lockout window in seconds (10 minutes)
+# Rate limiting settings (relaxed for development and testing)
+RATE_LIMIT_STATION_LOGIN  = 50   # max failed attempts before lockout
+RATE_LIMIT_WINDOW_SECONDS = 30   # lockout window in seconds (30 seconds)
 
 ROOT_URLCONF = 'election_portal.urls'
 
@@ -92,10 +109,23 @@ WSGI_APPLICATION = 'election_portal.wsgi.application'
 
 from django_mongodb_backend import parse_uri
 
-# MongoDB as default database for all models (auth, candidates, voting)
-DATABASES = {
-    'default': parse_uri('mongodb+srv://user:123@cluster0.qdf1iz9.mongodb.net/election'),
-}
+_default_mongo_uri = (
+    os.environ.get('MONGODB_URI') or
+    os.environ.get('MEMBER3_MONGO_URI') or
+    'mongodb+srv://user:123@cluster0.qdf1iz9.mongodb.net/election'
+)
+try:
+    DATABASES = {
+        'default': parse_uri(_default_mongo_uri),
+    }
+except Exception:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_mongodb_backend',
+            'NAME': 'election',
+            'HOST': _default_mongo_uri,
+        }
+    }
 
 
 # Password validation

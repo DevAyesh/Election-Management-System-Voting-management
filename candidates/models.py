@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from datetime import date
 
 def validate_age(dob):
+    if not dob:
+        return
     today = date.today()
     # Calculate age
     age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
@@ -34,17 +36,22 @@ class Candidate(models.Model):
         ('OTHER', 'Other / Prefer not to say'),
     ]
 
+    # External sync identifier
+    source_id = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    candidateId = models.CharField(max_length=50, null=True, blank=True)
+    photo_url = models.URLField(max_length=500, blank=True)
+
     full_name = models.CharField(max_length=255)
-    ballot_name = models.CharField(max_length=255, help_text="Name to appear on the record")
-    date_of_birth = models.DateField(validators=[validate_age])
-    nic = models.CharField(max_length=20, unique=True)
+    ballot_name = models.CharField(max_length=255, null=True, blank=True, help_text="Name to appear on the record")
+    date_of_birth = models.DateField(validators=[validate_age], null=True, blank=True)
+    nic = models.CharField(max_length=20, unique=True, null=True, blank=True)
     
     # Contact Details
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='OTHER')
-    address = models.TextField()
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='OTHER', null=True, blank=True)
+    address = models.TextField(null=True, blank=True)
     mailing_address = models.TextField(blank=True, null=True, help_text="If different from the permanent address.")
-    contact_number = models.CharField(max_length=20)
-    email = models.EmailField()
+    contact_number = models.CharField(max_length=20, null=True, blank=True)
+    email = models.EmailField(null=True, blank=True)
 
     # Electoral Qualification / Voter Status
     is_registered_voter = models.BooleanField(
@@ -61,10 +68,10 @@ class Candidate(models.Model):
         help_text="Serial number from the certified Electoral Register (e.g., Reg No: 154 in Unit A)."
     )
     
-    nomination_type = models.CharField(max_length=20, choices=NOMINATION_CHOICES)
+    nomination_type = models.CharField(max_length=20, choices=NOMINATION_CHOICES, null=True, blank=True)
     
     # Party Fields
-    party_name = models.CharField(max_length=20, choices=PARTY_CHOICES, blank=True, null=True)
+    party_name = models.CharField(max_length=200, blank=True, null=True)
     party_secretary_name = models.CharField(max_length=255, blank=True, null=True)
     # party_symbol is now auto-assigned/derived, no longer a field
     
@@ -75,10 +82,12 @@ class Candidate(models.Model):
     # Mandatory Artifacts
     candidate_photo = models.ImageField(
         upload_to='candidate_photos/',
+        null=True,
+        blank=True,
         help_text="Passport-style colour photograph to be used on the ballot / voter information."
     )
-    form_a = models.FileField(upload_to='form_a/')
-    asset_declaration = models.FileField(upload_to='asset_declarations/')
+    form_a = models.FileField(upload_to='form_a/', null=True, blank=True)
+    asset_declaration = models.FileField(upload_to='asset_declarations/', null=True, blank=True)
     
     # Comprehensive Declaration
     eligibility_declaration = models.BooleanField(default=False)
@@ -86,6 +95,10 @@ class Candidate(models.Model):
     submission_date = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
+        # Skip registration form checks for candidates synced from external database
+        if self.source_id:
+            return
+
         errors = {}
         # Nomination Logic Validation
         if self.nomination_type == 'PARTY':
@@ -121,7 +134,8 @@ class Candidate(models.Model):
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        if not self.source_id:
+            self.full_clean()
         # For new instances, ensure we don't explicitly set id=None
         # Let MongoDB backend auto-generate the ObjectId
         super().save(*args, **kwargs)
