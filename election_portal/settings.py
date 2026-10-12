@@ -195,6 +195,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Using MongoDB ObjectIdAutoField for all models
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
+# Silence MongoDB AutoField check for Django built-in contrib models (admin, auth, contenttypes)
+SILENCED_SYSTEM_CHECKS = ['mongodb.E001']
+
 # Authentication Settings
 LOGIN_URL = '/voting/station/login/'
 LOGIN_REDIRECT_URL = '/voting/'

@@ -28,6 +28,7 @@ venv.bak/
 .vscode/
 .idea/
 
-# Anchors
+# Anchors and Data
 anchors*.txt
+data/
 
