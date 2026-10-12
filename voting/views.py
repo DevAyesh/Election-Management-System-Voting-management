@@ -219,7 +219,7 @@ def station_login_required(view_func):
     def _wrapped(request, *args, **kwargs):
         if request.session.get('polling_station_id'):
             return view_func(request, *args, **kwargs)
-        messages.error(request, 'Please log in with your Polling Station key to continue.')
+        messages.error(request, 'කරුණාකර ඉදිරියට යාමට ඔබගේ ස්ථාන යතුර ඇතුළත් කරන්න. / தொடர உங்கள் நிலைய விசையை உள்ளிடவும். / Please log in with your Polling Station key to continue.')
         return redirect('station_login')
     return _wrapped
 
@@ -546,7 +546,7 @@ def station_login(request):
                 station_name=str(station),
                 details=f"Station session started ({destination}): {station.district_name} / {station.division_name}",
             )
-            messages.success(request, f'Station "{station}" logged in successfully.')
+            messages.success(request, f'"{station}" ස්ථානය සාර්ථකව සම්බන්ධ විය. / நிலையம் வெற்றிகரமாக இணைக்கப்பட்டது. / Station "{station}" logged in successfully.')
             
             if destination == 'results':
                 return redirect('station_results')
@@ -558,7 +558,7 @@ def station_login(request):
                 request=request,
                 details=f"Invalid login key attempt ({destination}): {login_key[:8]}***",
             )
-            messages.error(request, 'Invalid or inactive station key. Please try again.')
+            messages.error(request, 'වලංගු නොවන හෝ අක්‍රිය ස්ථාන යතුරකි. කරුණාකර නැවත උත්සාහ කරන්න. / தவறான அல்லது செயலற்ற நிலைய விசை. மீண்டும் முயற்சிக்கவும். / Invalid or inactive station key. Please try again.')
             return render(request, 'voting/login.html', {'active_tab': destination})
 
     active_tab = request.GET.get('tab', 'station')
@@ -577,7 +577,7 @@ def station_logout(request):
                 'polling_station_division', 'has_voted']:
         request.session.pop(key, None)
     request.session.save()
-    messages.success(request, 'Polling station session ended.')
+    messages.success(request, 'ඡන්ද මධ්‍යස්ථාන සැසිය අවසන් විය. / வாக்குச்சாவடி அமர்வு முடிவடைந்தது. / Polling station session ended.')
     return redirect('station_login')
 
 
