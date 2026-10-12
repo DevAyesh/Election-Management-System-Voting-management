@@ -423,7 +423,8 @@
             width: 100%;
             max-width: 555px;
             aspect-ratio: 4 / 3;
-            max-height: 335px;
+            min-height: 330px;
+            max-height: 360px;
             margin: 4px auto;
             background: #111827;
             border-radius: 6px;
@@ -431,6 +432,68 @@
             overflow: hidden;
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.7);
             transition: border-color 0.25s ease;
+        }
+
+        /* ── Scanner Overlay Container (Results inside scanner) ── */
+        .scanner-overlay-container {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+            pointer-events: none;
+        }
+
+        .scanner-overlay-container .feedback-state-box {
+            display: none !important;
+            width: 92%;
+            max-width: 440px;
+            border-radius: 8px;
+            padding: 13px 18px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+            animation: zoomInBox 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            background: #ffffff;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        .scanner-overlay-container .feedback-state-box.active {
+            display: block !important;
+        }
+
+        @keyframes zoomInBox {
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .redirect-hint {
+            margin-top: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #008829;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulseHint 1.4s ease-in-out infinite alternate;
+        }
+
+        .auto-restart-hint {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            animation: pulseHint 1.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseHint {
+            0% { opacity: 0.7; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
         #cameraFeed {
@@ -1072,6 +1135,73 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- ── Reply Boxes Inside Scanner ── -->
+                    <div class="scanner-overlay-container" id="scannerOverlayContainer">
+
+                        <!-- State: SUCCESS -->
+                        <div class="feedback-state-box box-success" id="panelSuccess" aria-live="polite">
+                            <div class="state-icon">✓</div>
+                            <div class="state-heading">VOTER AUTHORIZATION SUCCESSFUL</div>
+                            <div class="state-desc">QR verification completed successfully.</div>
+                            <div class="privacy-summary">
+                                <div class="privacy-row">
+                                    <span>Authorization Status:</span>
+                                    <strong style="color: #008829;">Verified (Active Session)</strong>
+                                </div>
+                                <div class="privacy-row">
+                                    <span>Polling Division:</span>
+                                    <strong>{{ station_name|default:"Polling Station" }}</strong>
+                                </div>
+                            </div>
+                            <div class="redirect-hint">
+                                <span>➔ Redirecting to voting dashboard...</span>
+                            </div>
+                        </div>
+
+                        <!-- State: INVALID -->
+                        <div class="feedback-state-box box-error" id="panelInvalid" aria-live="polite">
+                            <div class="state-icon">✕</div>
+                            <div class="state-heading">INVALID QR CODE</div>
+                            <div class="state-desc" id="invalidDesc">QR කේතය හඳුනාගත නොහැක / Invalid or Unrecognized QR Code</div>
+                            <div class="auto-restart-hint">
+                                <span>↺ Resuming scanner in a moment...</span>
+                            </div>
+                        </div>
+
+                        <!-- State: USED -->
+                        <div class="feedback-state-box box-warning" id="panelUsed" aria-live="polite">
+                            <div class="state-icon">⚠️</div>
+                            <div class="state-heading">QR CODE ALREADY USED</div>
+                            <div class="state-desc" id="usedDesc">මෙම QR කේතය දැනටමත් භාවිතා කර ඇත / QR Code Already Used</div>
+                            <div class="auto-restart-hint">
+                                <span>↺ Resuming scanner in a moment...</span>
+                            </div>
+                        </div>
+
+                        <!-- State: EXPIRED -->
+                        <div class="feedback-state-box box-warning" id="panelExpired" aria-live="polite">
+                            <div class="state-icon">⏱️</div>
+                            <div class="state-heading">QR CODE EXPIRED</div>
+                            <div class="state-desc">This authorization QR code is no longer valid.</div>
+                            <div class="auto-restart-hint">
+                                <span>↺ Resuming scanner in a moment...</span>
+                            </div>
+                        </div>
+
+                        <!-- State: CAMERA_ERROR -->
+                        <div class="feedback-state-box box-error" id="panelCameraError" aria-live="polite">
+                            <div class="state-icon">📷</div>
+                            <div class="state-heading">CAMERA UNAVAILABLE</div>
+                            <div class="state-desc">Unable to access the camera device.</div>
+                            <div style="margin-top: 8px;">
+                                <button type="button" class="btn-secondary" onclick="restartScanner()" style="padding: 5px 14px; font-size: 0.8rem;">
+                                    <span>↺</span> Retry Camera
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
                 <!-- ── 7 & 11. State Content Displays Below Scanner ── -->
@@ -1083,19 +1213,9 @@
                     </div>
                     <div class="status-sub-text">Waiting for voter authorization QR code</div>
 
-                    <!-- Scanner Gun / Manual Token Input -->
-                    <div style="margin: 14px auto 8px; display: flex; gap: 8px; width: 100%; max-width: 440px;">
-                        <input type="text" id="manualQrInput" placeholder="Scan QR barcode gun or enter token..."
-                               style="flex: 1; padding: 10px 14px; border: 2px solid #00bcd4; border-radius: 6px; font-family: monospace; font-size: 0.85rem;"
-                               onkeydown="if(event.key==='Enter') submitManualQr();" autocomplete="off">
-                        <button type="button" onclick="submitManualQr()"
-                                style="background: #00bcd4; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: background 0.2s;">
-                            Verify
-                        </button>
-                    </div>
 
                     {% if sample_qrs %}
-                    <div style="margin: 6px auto 12px; width: 100%; max-width: 440px; text-align: left;">
+                    <div style="margin: 6px auto 10px; width: 100%; max-width: 440px; text-align: left;">
                         <div style="font-size: 0.74rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">
                             ⚡ Live MongoDB Tokens (Click to test):
                         </div>
@@ -1116,104 +1236,6 @@
                     <div class="actions-strip">
                         <button type="button" class="btn-secondary" onclick="restartScanner()">
                             <span>↺</span> Restart Camera
-                        </button>
-                    </div>
-                </div>
-
-                <!-- State: DETECTED -->
-                <div class="state-panel" id="panelDetected" aria-live="polite">
-                    <div class="status-badge-line color-green">
-                        <span class="status-dot-green">●</span> QR CODE DETECTED
-                    </div>
-                    <div class="status-sub-text">Capturing voter authorization token...</div>
-                </div>
-
-                <!-- State: VERIFYING -->
-                <div class="state-panel" id="panelVerifying" aria-live="polite">
-                    <div class="status-badge-line color-cyan">
-                        <span>◌</span> VERIFYING QR CODE...
-                    </div>
-                    <div class="status-sub-text">Verifying voter authorization with election registry...</div>
-                </div>
-
-                <!-- State: SUCCESS -->
-                <div class="state-panel" id="panelSuccess" aria-live="polite">
-                    <div class="feedback-state-box box-success">
-                        <div class="state-icon">✓</div>
-                        <div class="state-heading">VOTER AUTHORIZATION SUCCESSFUL</div>
-                        <div class="state-desc">QR verification completed successfully.</div>
-
-                        <!-- Privacy Compliant Verification Summary -->
-                        <div class="privacy-summary">
-                            <div class="privacy-row">
-                                <span>Authorization Status:</span>
-                                <strong style="color: #008829;">Verified (Active Session)</strong>
-                            </div>
-                            <div class="privacy-row">
-                                <span>Polling Division:</span>
-                                <strong>{{ station_name|default:"Anuradhapura / Anuradhapura East (C)" }}</strong>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="actions-strip">
-                        <a href="{% url 'voting_index' %}" class="btn-confirm" id="btnContinueVoting">
-                            Continue to Voting &nbsp;➔
-                        </a>
-                    </div>
-                </div>
-
-                <!-- State: INVALID -->
-                <div class="state-panel" id="panelInvalid" aria-live="polite">
-                    <div class="feedback-state-box box-error">
-                        <div class="state-icon">✕</div>
-                        <div class="state-heading">INVALID QR CODE</div>
-                        <div class="state-desc" id="invalidDesc">This QR code could not be verified.</div>
-                    </div>
-                    <div class="actions-strip">
-                        <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Scan Again
-                        </button>
-                    </div>
-                </div>
-
-                <!-- State: USED -->
-                <div class="state-panel" id="panelUsed" aria-live="polite">
-                    <div class="feedback-state-box box-warning">
-                        <div class="state-icon">⚠️</div>
-                        <div class="state-heading">QR CODE ALREADY USED</div>
-                        <div class="state-desc" id="usedDesc">This authorization token has already been used.</div>
-                    </div>
-                    <div class="actions-strip">
-                        <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Scan Another QR
-                        </button>
-                    </div>
-                </div>
-
-                <!-- State: EXPIRED -->
-                <div class="state-panel" id="panelExpired" aria-live="polite">
-                    <div class="feedback-state-box box-warning">
-                        <div class="state-icon">⏱️</div>
-                        <div class="state-heading">QR CODE EXPIRED</div>
-                        <div class="state-desc">This authorization QR code is no longer valid.</div>
-                    </div>
-                    <div class="actions-strip">
-                        <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Scan Again
-                        </button>
-                    </div>
-                </div>
-
-                <!-- State: CAMERA_ERROR -->
-                <div class="state-panel" id="panelCameraError" aria-live="polite">
-                    <div class="feedback-state-box box-error">
-                        <div class="state-icon">📷</div>
-                        <div class="state-heading">CAMERA UNAVAILABLE</div>
-                        <div class="state-desc">Unable to access the camera device.</div>
-                    </div>
-                    <div class="actions-strip">
-                        <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Retry Camera
                         </button>
                     </div>
                 </div>
@@ -1266,8 +1288,9 @@
     <!-- ── Script Logic ── -->
     <script>
         // DEVELOPMENT ONLY
-        // Remove when real QR verification is connected
         const VOTING_DASHBOARD_URL = "{% url 'voting_index' %}";
+        const SUCCESS_REDIRECT_DELAY = 3800;   // 3.8 seconds preview before redirect
+        const ERROR_AUTO_RESTART_DELAY = 4500; // 4.5 seconds notice before auto-restarting scanner
 
         // Element references
         const videoFeed = document.getElementById('cameraFeed');
@@ -1307,10 +1330,18 @@
         let animId = null;
         let currentState = 'searching';
         let simulationTimers = [];
+        let autoRestartTimer = null;
 
         function clearSimulationTimers() {
             simulationTimers.forEach(t => clearTimeout(t));
             simulationTimers = [];
+        }
+
+        function clearAutoRestart() {
+            if (autoRestartTimer) {
+                clearTimeout(autoRestartTimer);
+                autoRestartTimer = null;
+            }
         }
 
         // ── Camera Initialization & Subtle Canvas Fallback ──
@@ -1398,10 +1429,23 @@
                 devSelectState.value = state;
             }
 
-            // Hide all state panels
-            Object.values(panels).forEach(p => { if (p) p.classList.remove('active'); });
+            // Cancel any pending auto-restart timer
+            clearAutoRestart();
+
+            // Hide/show panels
+            Object.values(panels).forEach(p => {
+                if (p) {
+                    p.classList.remove('active');
+                    if (p !== panels.searching) {
+                        p.style.display = 'none';
+                    }
+                }
+            });
             if (panels[state]) {
                 panels[state].classList.add('active');
+                if (panels[state] !== panels.searching) {
+                    panels[state].style.display = 'block';
+                }
             }
 
             // Reset reticle classes & indicators
@@ -1422,6 +1466,7 @@
 
             switch (state) {
                 case 'searching':
+                    targetReticle.style.display = 'block';
                     hudTopLabel.textContent = 'CAMERA ACTIVE';
                     hudStatusLabel.textContent = 'WAITING FOR QR CODE';
                     hudStatusLabel.style.color = '#00bcd4';
@@ -1437,6 +1482,7 @@
                     break;
 
                 case 'detected':
+                    targetReticle.style.display = 'block';
                     hudTopLabel.textContent = 'CAMERA ACTIVE';
                     hudStatusLabel.textContent = 'QR CODE DETECTED';
                     hudStatusLabel.style.color = '#00b33c';
@@ -1451,6 +1497,7 @@
                     break;
 
                 case 'verifying':
+                    targetReticle.style.display = 'block';
                     hudTopLabel.textContent = 'PROCESSING';
                     hudStatusLabel.textContent = 'VERIFYING QR CODE...';
                     hudStatusLabel.style.color = '#00bcd4';
@@ -1468,85 +1515,67 @@
                     break;
 
                 case 'success':
+                    targetReticle.style.display = 'none';
+                    laserLine.style.display = 'none';
+                    scannerDim.classList.add('active');
+
                     hudTopLabel.textContent = 'VERIFIED';
                     hudStatusLabel.textContent = 'AUTHORIZATION CONFIRMED';
                     hudStatusLabel.style.color = '#00b33c';
-
-                    laserLine.style.display = 'none';
-                    reticleCrossH.style.opacity = '0';
-                    reticleCrossV.style.opacity = '0';
-
-                    scannerDim.classList.add('active');
-                    badgeSuccess.style.display = 'flex';
-
-                    targetReticle.style.transform = 'translate(-50%, -50%) scale(1)';
-                    targetReticle.style.borderColor = 'rgba(0, 179, 60, 0.6)';
-                    corners.forEach(c => c.style.borderColor = '#00b33c');
                     break;
 
                 case 'invalid':
+                    targetReticle.style.display = 'none';
+                    laserLine.style.display = 'none';
+                    scannerDim.classList.add('active');
+
                     hudTopLabel.textContent = 'ERROR';
                     hudStatusLabel.textContent = 'INVALID QR CODE';
                     hudStatusLabel.style.color = '#c0405a';
 
-                    laserLine.style.display = 'none';
-                    reticleCrossH.style.opacity = '0';
-                    reticleCrossV.style.opacity = '0';
-
-                    scannerDim.classList.add('active');
-                    badgeError.style.display = 'flex';
-
-                    targetReticle.classList.add('shake');
-                    targetReticle.style.borderColor = 'rgba(192, 64, 90, 0.6)';
-                    corners.forEach(c => c.style.borderColor = '#c0405a');
+                    // Show error message, pause, and automatically restart scanning
+                    autoRestartTimer = setTimeout(() => {
+                        restartScanner();
+                    }, ERROR_AUTO_RESTART_DELAY);
                     break;
 
                 case 'used':
+                    targetReticle.style.display = 'none';
+                    laserLine.style.display = 'none';
+                    scannerDim.classList.add('active');
+
                     hudTopLabel.textContent = 'WARNING';
                     hudStatusLabel.textContent = 'QR CODE ALREADY USED';
                     hudStatusLabel.style.color = '#d97706';
 
-                    laserLine.style.display = 'none';
-                    reticleCrossH.style.opacity = '0';
-                    reticleCrossV.style.opacity = '0';
-
-                    scannerDim.classList.add('active');
-                    badgeWarning.style.display = 'flex';
-
-                    targetReticle.style.borderColor = 'rgba(217, 119, 6, 0.6)';
-                    corners.forEach(c => c.style.borderColor = '#d97706');
+                    // Show error message, pause, and automatically restart scanning
+                    autoRestartTimer = setTimeout(() => {
+                        restartScanner();
+                    }, ERROR_AUTO_RESTART_DELAY);
                     break;
 
                 case 'expired':
+                    targetReticle.style.display = 'none';
+                    laserLine.style.display = 'none';
+                    scannerDim.classList.add('active');
+
                     hudTopLabel.textContent = 'EXPIRED';
                     hudStatusLabel.textContent = 'QR CODE EXPIRED';
                     hudStatusLabel.style.color = '#d97706';
 
-                    laserLine.style.display = 'none';
-                    reticleCrossH.style.opacity = '0';
-                    reticleCrossV.style.opacity = '0';
-
-                    scannerDim.classList.add('active');
-                    badgeExpired.style.display = 'flex';
-
-                    targetReticle.style.borderColor = 'rgba(217, 119, 6, 0.6)';
-                    corners.forEach(c => c.style.borderColor = '#d97706');
+                    autoRestartTimer = setTimeout(() => {
+                        restartScanner();
+                    }, ERROR_AUTO_RESTART_DELAY);
                     break;
 
                 case 'camera_error':
+                    targetReticle.style.display = 'none';
+                    laserLine.style.display = 'none';
+                    scannerDim.classList.add('active');
+
                     hudTopLabel.textContent = 'HARDWARE';
                     hudStatusLabel.textContent = 'CAMERA UNAVAILABLE';
                     hudStatusLabel.style.color = '#94a3b8';
-
-                    laserLine.style.display = 'none';
-                    reticleCrossH.style.opacity = '0';
-                    reticleCrossV.style.opacity = '0';
-
-                    scannerDim.classList.add('active');
-                    badgeCamera.style.display = 'flex';
-
-                    targetReticle.style.borderColor = 'rgba(100, 116, 139, 0.5)';
-                    corners.forEach(c => c.style.borderColor = '#64748b');
                     break;
             }
         }
@@ -1561,6 +1590,7 @@
         async function verifyQrTokenBackend(token) {
             if (!token) return;
             clearSimulationTimers();
+            clearAutoRestart();
             setScannerState('verifying');
 
             try {
@@ -1577,39 +1607,64 @@
 
                 if (data.status === 'success') {
                     setScannerState('success');
+                    // Message preview, then smooth automatic redirect to voting dashboard
                     setTimeout(() => {
                         window.location.href = data.redirect_url || VOTING_DASHBOARD_URL;
-                    }, 1200);
+                    }, SUCCESS_REDIRECT_DELAY);
                 } else if (data.status === 'used') {
-                    setScannerState('used');
                     const desc = document.getElementById('usedDesc');
                     if (desc && data.message) desc.textContent = data.message;
+                    setScannerState('used');
                 } else if (data.status === 'invalid') {
-                    setScannerState('invalid');
                     const desc = document.getElementById('invalidDesc');
                     if (desc && data.message) desc.textContent = data.message;
+                    setScannerState('invalid');
                 } else {
-                    alert(data.message || 'Verification failed');
-                    setScannerState('searching');
+                    const desc = document.getElementById('invalidDesc');
+                    if (desc) desc.textContent = data.message || 'Verification failed';
+                    setScannerState('invalid');
                 }
             } catch (err) {
                 console.error('QR Verification error:', err);
+                const desc = document.getElementById('invalidDesc');
+                if (desc) desc.textContent = 'Verification connection error';
                 setScannerState('invalid');
             }
         }
 
-        function submitManualQr() {
-            const input = document.getElementById('manualQrInput');
-            if (input && input.value.trim()) {
-                verifyQrTokenBackend(input.value.trim());
-            }
-        }
-
         function testToken(tok) {
-            const input = document.getElementById('manualQrInput');
-            if (input) input.value = tok;
             verifyQrTokenBackend(tok);
         }
+
+        // ── Hardware USB Barcode/QR Scanner Gun Listener ──
+        let scannerKeyBuffer = '';
+        let lastScannerKeyTime = 0;
+
+        document.addEventListener('keydown', function(e) {
+            if (currentState !== 'searching') return;
+            if (e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+            const now = Date.now();
+
+            if (e.key === 'Enter') {
+                if (scannerKeyBuffer.trim().length >= 4) {
+                    e.preventDefault();
+                    const scannedToken = scannerKeyBuffer.trim();
+                    scannerKeyBuffer = '';
+                    verifyQrTokenBackend(scannedToken);
+                }
+                return;
+            }
+
+            // Normal printable ASCII characters
+            if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                if (now - lastScannerKeyTime > 1200) {
+                    scannerKeyBuffer = '';
+                }
+                scannerKeyBuffer += e.key;
+                lastScannerKeyTime = now;
+            }
+        });
 
         // ── Native BarcodeDetector for live camera scanning ──
         let barcodeDetector = null;
@@ -1686,6 +1741,7 @@
             {% endif %}
 
             clearSimulationTimers();
+            clearAutoRestart();
             setScannerState('searching');
 
             simulationTimers.push(setTimeout(() => {
@@ -1698,7 +1754,7 @@
                         setScannerState('success');
                         setTimeout(() => {
                             window.location.href = VOTING_DASHBOARD_URL;
-                        }, 1000);
+                        }, SUCCESS_REDIRECT_DELAY);
                     }, 1000));
                 }, 400));
             }, 1000));
@@ -1706,8 +1762,11 @@
 
         // ── Restart Scanner Function ──
         function restartScanner() {
+            clearAutoRestart();
             clearSimulationTimers();
+            scannerKeyBuffer = '';
             setScannerState('searching');
+            isFrameProcessing = false;
             startCamera();
         }
 

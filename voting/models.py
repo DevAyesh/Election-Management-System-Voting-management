@@ -107,6 +107,7 @@ class BlockchainBlock(models.Model):
     station_code  = models.CharField(max_length=30)
     voted_at_iso  = models.CharField(max_length=50)  # ISO-8601 string
     ballot_hash   = models.CharField(max_length=64)  # SHA-256 hex
+    ballot_ciphertext = models.TextField(default='')
     previous_hash = models.CharField(max_length=64)  # SHA-256 hex
     block_hash    = models.CharField(max_length=64, unique=True)  # SHA-256 hex
 
@@ -116,3 +117,15 @@ class BlockchainBlock(models.Model):
 
     def __str__(self):
         return f"Block #{self.block_index} | {self.station_code} | {self.block_hash[:12]}…"
+
+
+class LedgerStatus(models.Model):
+    """Single-row status written by the watch_chain command."""
+    id = ObjectIdAutoField(primary_key=True)
+    ok = models.BooleanField(default=True)
+    voting_locked = models.BooleanField(default=False)
+    detail = models.TextField(blank=True, default='')
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'ledger_status'

@@ -61,6 +61,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-1v_@o@rwvbz6(a
 
 # Encryption Key for Voting Data
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', 'Avq7dnH43UU0YcC1PkbG7mQNmer_n9Jya5NSLOpFVQQ=')
+LEDGER_HMAC_KEY = os.environ["LEDGER_HMAC_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'

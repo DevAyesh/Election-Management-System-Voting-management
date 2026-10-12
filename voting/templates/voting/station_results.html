@@ -359,6 +359,22 @@
             .vote-count.first { font-size: 1.2rem; }
             .results-title { font-size: 1.4rem; }
         }
+        @keyframes tamperBlink {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+            }
+            50% {
+                opacity: 0.35;
+                transform: scale(1.04);
+                box-shadow: 0 0 12px 3px rgba(220, 38, 38, 0.5);
+            }
+        }
+
+        .btn-tamper-blink {
+            animation: tamperBlink 1s infinite ease-in-out;
+        }
     </style>
 </head>
 
@@ -394,8 +410,7 @@
     <div class="station-strip">
         <span>🗳️ &nbsp;{{ station_name }} &nbsp;·&nbsp; Station Results</span>
         <span>
-            <a href="{% url 'voting_index' %}">← Back to Ballot</a>
-            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">🔒 End Session</a>
+            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">End Session</a>
         </span>
     </div>
 
@@ -413,27 +428,35 @@
                 </p>
             </div>
             <div class="action-btns">
-                {% if chain_is_valid %}
+                {% if not excluded_blocks and not ledger_status or not excluded_blocks and ledger_status.ok %}
                 <span style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #16a34a;color:#15803d;padding:6px 12px;border-radius:6px;font-size:0.8rem;font-weight:600;">
-                    &#9989; Ledger OK
+                    Ledger OK
                 </span>
                 {% else %}
-                <span style="display:inline-flex;align-items:center;gap:6px;background:#fff1f2;border:2px solid #dc2626;color:#b91c1c;padding:6px 12px;border-radius:6px;font-size:0.8rem;font-weight:700;">
-                    &#10060; Tampered
-                </span>
+                <button id="btn-tamper-detail" onclick="openTamperModal()" class="btn-tamper-blink" style="display:inline-flex;align-items:center;gap:6px;background:#fff1f2;border:2px solid #dc2626;color:#b91c1c;padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+                    Tampered
+                </button>
                 {% endif %}
-                <a href="{% url 'voting_index' %}" class="btn btn-ballot">🗳️ Back to Ballot</a>
-                <a href="{% url 'station_logout' %}" class="btn btn-logout">🔒 End Session</a>
+                <a href="{% url 'station_logout' %}" class="btn btn-logout">End Session</a>
             </div>
         </div>
 
-        {% if not chain_is_valid %}
-        <div style="background:#fff1f2;border:2px solid #dc2626;border-radius:8px;padding:12px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px;">
-            <span style="font-size:1.6rem;">&#10060;</span>
-            <div>
-                <div style="font-weight:700;color:#b91c1c;font-size:0.95rem;">BLOCKCHAIN INTEGRITY FAILURE</div>
-                <div style="font-size:0.82rem;color:#b91c1c;margin-top:2px;">{{ chain_error }}</div>
+        <!-- Ledger Integrity Banner -->
+        {% if not excluded_blocks and not ledger_status or not excluded_blocks and ledger_status.ok %}
+        <div style="background:#f0fdf4;border:1px solid #16a34a;border-radius:8px;padding:8px 14px;margin-bottom:18px;display:flex;align-items:center;gap:8px;color:#15803d;font-size:0.85rem;font-weight:600;">
+            <span>Integrity OK</span>
+        </div>
+        {% else %}
+        <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:12px 18px;margin-bottom:18px;color:#92400e;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <strong style="font-size:0.95rem;">INTEGRITY WARNING - {{ excluded_blocks|length }} vote(s) excluded from the count. Voting is continuing.</strong>
+                <button onclick="openTamperModal()" style="background:none;border:none;color:#b45309;text-decoration:underline;cursor:pointer;font-size:0.83rem;font-weight:700;padding:0;">විස්තර බලන්න / View Details / விவரங்கள் காண்க</button>
             </div>
+            {% if ledger_status.voting_locked %}
+            <div style="font-size:0.85rem;margin-top:6px;color:#b91c1c;font-weight:700;">
+                Voting is locked.
+            </div>
+            {% endif %}
         </div>
         {% endif %}
 
@@ -516,13 +539,98 @@
             </table>
         </div>
 
-        <!-- Refresh Note -->
-        <div class="refresh-note">
-            🔄 පිටුව සෑම තත්පර 30කට වරක් ස්වයංක්‍රීයව නැවුම් වේ &bull;
-            Page refreshes automatically every 30 seconds
-        </div>
+
 
     </div>
+
+    {% if excluded_blocks or ledger_status and not ledger_status.ok %}
+    <!-- ===== TAMPER DETAIL MODAL ===== -->
+    <div id="tamper-modal-overlay" style="
+        display:none; position:fixed; inset:0; z-index:9999;
+        background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
+        align-items:center; justify-content:center; padding:16px;
+    ">
+        <div style="
+            background:#fff; border-radius:14px; max-width:660px; width:100%;
+            box-shadow:0 20px 60px rgba(0,0,0,0.35);
+            overflow:hidden; animation:slideUp 0.25s ease;
+        ">
+            <!-- Modal Header -->
+            <div style="background:#b91c1c;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div>
+                        <div style="color:#fff;font-size:1.05rem;font-weight:700;line-height:1.2;">ගොනු නිඛිල ව්‍යාකූල ව ඇත</div>
+                        <div style="color:#fca5a5;font-size:0.78rem;margin-top:2px;">Blockchain Integrity Warning &nbsp;&bull;&nbsp; தகவல் திருத்தம் கண்டறியப்பட்டது</div>
+                    </div>
+                </div>
+                <button onclick="closeTamperModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.4rem;cursor:pointer;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">&times;</button>
+            </div>
+
+            <!-- Three-language explanation -->
+            <div style="padding:20px 22px;">
+
+                <!-- SINHALA -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">සිංහල</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">ඡන්ද දත්ත හෝ අඛණ්ඩ ලේජරය වෙනස් කර ඇත</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        ඡන්ද ගොනු හෝ බ්ලොක්චේන් ලේජරය වෙනස් කර ඇති බව හඳුනා ගන්නා ලදී.
+                        දූෂිත ඡන්ද ගණනයෙන් බැහැර කර ඇති අතර ඡන්දය ප්‍රකාශ කිරීම අඛණ්ඩව සිදුවේ.
+                        {% if ledger_status.voting_locked %}ඡන්ද ක්‍රියාවලිය අවහිර කර ඇත. ප්‍රධාන නිලධාරියා සම්බන්ධ කරගන්න.{% endif %}
+                    </div>
+                </div>
+
+                <!-- ENGLISH -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">ENGLISH</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">Tampered Vote Data or Ledger Detected</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        The cryptographic blockchain ledger does not match the vote database.
+                        {{ excluded_blocks|length }} vote(s) excluded from the count. Voting is continuing.
+                        {% if ledger_status.voting_locked %}Voting is locked. Contact the presiding officer immediately.{% endif %}
+                    </div>
+                </div>
+
+                <!-- TAMIL -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:16px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">தமிழ்</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">வாக்கு தரவு அல்லது பதிவேட்டில் மாற்றம் கண்டறியப்பட்டது</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        வாக்கு தரவுத்தளம் மற்றும் கிரிப்டோகிராஃபிக் பதிவேடு ஒத்துப்போகவில்லை.
+                        {{ excluded_blocks|length }} வாக்கு(கள்) எண்ணிக்கையிலிருந்து விலக்கப்பட்டுள்ளன. வாக்களிப்பு தொடர்கிறது.
+                        {% if ledger_status.voting_locked %}வாக்களிப்பு பூட்டப்பட்டுள்ளது. தலைமை அதிகாரியை உடனடியாக தொடர்பு கொள்ளவும்.{% endif %}
+                    </div>
+                </div>
+
+                <!-- Technical Detail -->
+                <div style="background:#1e1e2e;border-radius:8px;padding:12px 14px;">
+                    <div style="font-size:0.72rem;font-weight:700;color:#6b7280;letter-spacing:0.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        TECHNICAL CAUSE / තාක්ෂණික හේතුව / தொழில்நுட்ப காரணம்
+                    </div>
+                    <div style="font-family:'Courier New',monospace;font-size:0.78rem;color:#f87171;word-break:break-all;line-height:1.5;">
+                        {% if ledger_status.detail %}{{ ledger_status.detail }}{% elif integrity_error %}{{ integrity_error }}{% endif %}
+                    </div>
+                    {% if excluded_blocks %}
+                    <div style="margin-top:6px;font-family:'Courier New',monospace;font-size:0.75rem;color:#fb923c;">Excluded blocks: {{ excluded_blocks }}</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top:1px solid #fee2e2;padding:12px 22px;display:flex;justify-content:flex-end;gap:10px;background:#fef2f2;">
+                <button onclick="closeTamperModal()" style="background:#dc2626;color:#fff;border:none;padding:9px 22px;border-radius:7px;font-size:0.88rem;font-weight:700;cursor:pointer;">Close / වසන්න / மூடு</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+    </style>
+    {% endif %}
 
     <script>
         // Auto-refresh every 30 seconds
@@ -537,6 +645,17 @@
         }
         setInterval(updateTimestamp, 1000);
         updateTimestamp();
+
+        // Tamper modal
+        function openTamperModal() {
+            const m = document.getElementById('tamper-modal-overlay');
+            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        }
+        function closeTamperModal() {
+            const m = document.getElementById('tamper-modal-overlay');
+            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
     </script>
 
 </body>

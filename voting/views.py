@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.db import IntegrityError
+from pymongo.errors import DuplicateKeyError
 from functools import wraps
 from candidates.models import Candidate
-from .models import Vote, PollingStation, AuditLog, BlockchainBlock
+from .models import Vote, PollingStation, AuditLog, BlockchainBlock, LedgerStatus
 import json
 import threading
 import pymongo
@@ -12,7 +14,10 @@ from django.conf import settings
 from cryptography.fernet import Fernet
 from django.contrib import messages
 from django.utils import timezone
-from .blockchain import build_block_fields, get_chain_tip_hash, get_next_block_index
+from .blockchain import (
+    build_block_fields, get_chain_tip_hash, get_next_block_index,
+    get_ballots_from_chain,
+)
 
 try:
     import dns.resolver
@@ -31,6 +36,27 @@ cipher_suite = Fernet(settings.ENCRYPTION_KEY.encode())
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _voting_locked():
+    s = LedgerStatus.objects.first()
+    return bool(s and s.voting_locked)
+
+def _decrypt_json(s):
+    return json.loads(cipher_suite.decrypt(s.encode()).decode())
+
+def _load_ballots(station_code=None):
+    qs = BlockchainBlock.objects.order_by('block_index')
+    if station_code:
+        qs = qs.filter(station_code=station_code)
+    return get_ballots_from_chain(qs, _decrypt_json)
+
+def _station_name_map():
+    # maps station_code like "19-D" to the same display name that
+    # station_login stores in session['polling_station_name']
+    mapping = {}
+    for s in PollingStation.objects.all():
+        mapping[f"{s.district_number:02d}-{s.division_code}"] = str(s)
+    return mapping
 
 _qr_mongo_client = None
 
@@ -321,6 +347,11 @@ def get_candidate_sort_priority(candidate):
 @station_login_required
 def index(request):
     """Main voting ballot — only accessible after polling station login."""
+    if _voting_locked():
+        return HttpResponse(
+            'Voting is paused: integrity check failed. Contact the presiding officer.',
+            status=503)
+
     candidates_qs = Candidate.objects.all()
     candidates = []
     for c in candidates_qs:
@@ -368,6 +399,12 @@ def submit_vote(request):
             status=403,
         )
 
+    if _voting_locked():
+        return JsonResponse(
+            {'status': 'error',
+             'message': 'Voting is paused: integrity check failed. Contact the presiding officer.'},
+            status=503)
+
     # Guard against duplicate concurrent POST (double-click protection only)
     if request.session.get('vote_in_progress'):
         return JsonResponse(
@@ -395,44 +432,50 @@ def submit_vote(request):
         except PollingStation.DoesNotExist:
             station_code = 'XX'
 
-        # Encrypt preferences
-        json_str       = json.dumps(preferences)
-        encrypted_data = cipher_suite.encrypt(json_str.encode()).decode()
+        # Encrypt twice with a fixed timestamp of 0 so no creation time is
+        # exposed. Fernet uses a random IV, so the two ciphertexts differ and
+        # nothing links the vote row to the block.
+        json_str     = json.dumps(preferences)
+        vote_cipher  = cipher_suite.encrypt_at_time(json_str.encode(), 0).decode()
+        block_cipher = cipher_suite.encrypt_at_time(json_str.encode(), 0).decode()
 
-        # Store vote with station tag — NO timestamp to preserve 100% voter privacy & anonymity
-        vote_obj = Vote.objects.create(
-            preferences=encrypted_data,
-            polling_station=station_name,
-            station_code=station_code,
-        )
+        # 1) Authoritative record: the ledger block (retry on index collision)
+        appended = False
+        for _attempt in range(5):
+            try:
+                with _blockchain_lock:
+                    next_index   = get_next_block_index(BlockchainBlock)
+                    prev_hash    = get_chain_tip_hash(BlockchainBlock)
+                    block_fields = build_block_fields(
+                        block_index   = next_index,
+                        station_code  = station_code,
+                        preferences   = preferences,
+                        previous_hash = prev_hash,
+                        ciphertext    = block_cipher,
+                    )
+                    BlockchainBlock.objects.create(**block_fields)
+                appended = True
+                break
+            except (IntegrityError, DuplicateKeyError):
+                continue
+        if not appended:
+            raise RuntimeError('Could not append ledger block')
 
-        # ------------------------------------------------------------------
-        # Blockchain ledger: append one block per vote.
-        # The lock ensures no two concurrent requests race on block_index.
-        # ------------------------------------------------------------------
+        # 2) Cross-check copy in the vote collection
         try:
-            with _blockchain_lock:
-                next_index    = get_next_block_index(BlockchainBlock)
-                prev_hash     = get_chain_tip_hash(BlockchainBlock)
-                block_fields  = build_block_fields(
-                    block_index   = next_index,
-                    station_code  = station_code,
-                    preferences   = preferences,
-                    previous_hash = prev_hash,
-                )
-                BlockchainBlock.objects.create(**block_fields)
-        except Exception as bc_err:
-            # Blockchain failure must NOT silently swallow a vote.
-            # Roll back the vote and surface the error so the operator is alerted.
-            vote_obj.delete()
-            raise RuntimeError(f"Blockchain ledger write failed: {bc_err}") from bc_err
+            Vote.objects.create(
+                preferences=vote_cipher,
+                polling_station=station_name,
+                station_code=station_code,
+            )
+        except Exception as copy_err:
+            _write_audit(
+                AuditLog.EventType.ERROR,
+                request=request,
+                station_name=station_name,
+                details=f'Vote copy write failed after block append: {copy_err}',
+            )
 
-        _write_audit(
-            AuditLog.EventType.VOTE_CAST,
-            request=request,
-            station_name=station_name,
-            details=f"Vote cast at station {station_code} | chain block #{next_index}",
-        )
 
         # Mark verified QR token as used in MongoDB Atlas
         voter_qr_token = request.session.get('voter_qr_token')
@@ -664,24 +707,24 @@ def station_results(request):
     Accessible to the polling master after voting ends without re-auth.
     """
     station_name = request.session.get('polling_station_name', '')
+    station_id = request.session.get('polling_station_id')
+    station_code = None
+    if station_id:
+        try:
+            station = PollingStation.objects.get(id=station_id)
+            station_code = f"{station.district_number:02d}-{station.division_code}"
+        except Exception:
+            pass
 
     candidates_qs = Candidate.objects.all()
-    station_votes = Vote.objects.filter(polling_station=station_name)
-
-    decrypted_votes = []
-    for vote in station_votes:
-        try:
-            decrypted_data = cipher_suite.decrypt(vote.preferences.encode()).decode()
-            decrypted_votes.append(json.loads(decrypted_data))
-        except Exception as e:
-            print(f"[DECRYPT ERROR] {e}")
-            continue
+    ballots, bad_blocks = _load_ballots(station_code)
 
     results_data = []
     for candidate in candidates_qs:
         c_id   = str(candidate.id)
         counts = {1: 0, 2: 0, 3: 0}
-        for prefs in decrypted_votes:
+        for b in ballots:
+            prefs = b['prefs']
             if prefs.get('1') == c_id:
                 counts[1] += 1
             if prefs.get('2') == c_id:
@@ -707,19 +750,138 @@ def station_results(request):
     second_count = sum(r['counts'][2] for r in results_data)
     third_count = sum(r['counts'][3] for r in results_data)
 
-    # Chain integrity check
-    from .blockchain import verify_chain as _verify_chain
-    chain_is_valid, chain_error = _verify_chain(BlockchainBlock.objects.order_by('block_index'))
+    # Full integrity and reconciliation checks
+    from .blockchain import (
+        verify_chain as _verify_chain,
+        reconcile_votes_with_chain as _reconcile_votes,
+    )
+    all_blocks = list(BlockchainBlock.objects.order_by('block_index'))
+    chain_is_valid, chain_error = _verify_chain(all_blocks)
+
+    reconcile_ok, reconcile_info = _reconcile_votes(Vote.objects.all(), all_blocks, _decrypt_json)
+
+    ledger_status = LedgerStatus.objects.first()
+
+    errors = []
+    if not chain_is_valid:
+        errors.append(chain_error or 'Blockchain sequence or hash tampered')
+    if bad_blocks:
+        errors.append(f'Corrupted block contents detected: Block(s) {bad_blocks}')
+    if not reconcile_ok:
+        v_diff = reconcile_info.get('votes_without_block', 0)
+        b_diff = reconcile_info.get('blocks_without_vote', 0)
+        u_diff = reconcile_info.get('undecryptable_votes', 0)
+        reconcile_parts = []
+        if v_diff:
+            reconcile_parts.append(f'{v_diff} vote(s) in database do not match ledger')
+        if b_diff:
+            reconcile_parts.append(f'{b_diff} block(s) in ledger have no matching vote')
+        if u_diff:
+            reconcile_parts.append(f'{u_diff} undecryptable vote(s)')
+        errors.append('Vote record mismatch: ' + (', '.join(reconcile_parts) or str(reconcile_info)))
+    if ledger_status and not ledger_status.ok and ledger_status.detail:
+        if ledger_status.detail not in errors:
+            errors.append(ledger_status.detail)
+
+    ledger_ok = (len(errors) == 0)
+    integrity_error = ' | '.join(errors) if errors else ''
 
     return render(request, 'voting/station_results.html', {
         'results': results_data,
         'station_name': station_name,
-        'total_votes': len(decrypted_votes),
+        'total_votes': len(ballots),
         'first_count': first_count,
         'second_count': second_count,
         'third_count': third_count,
+        'ledger_ok': ledger_ok,
+        'integrity_error': integrity_error,
         'chain_is_valid': chain_is_valid,
         'chain_error': chain_error,
+        'ledger_status': ledger_status,
+        'bad_blocks_count': len(bad_blocks),
+        'excluded_blocks': bad_blocks,
+    })
+
+
+def results(request):
+    """
+    Global results view across all polling stations.
+    """
+    candidates_qs = Candidate.objects.all()
+    ballots, bad_blocks = _load_ballots()
+
+    results_data = []
+    for candidate in candidates_qs:
+        c_id   = str(candidate.id)
+        counts = {1: 0, 2: 0, 3: 0}
+        for b in ballots:
+            prefs = b['prefs']
+            if prefs.get('1') == c_id:
+                counts[1] += 1
+            if prefs.get('2') == c_id:
+                counts[2] += 1
+            if prefs.get('3') == c_id:
+                counts[3] += 1
+
+        symbol_filename = get_party_symbol(candidate.party_name)
+        results_data.append({
+            'name': candidate.ballot_name or candidate.full_name,
+            'party': candidate.party_name or 'Independent',
+            'color': get_party_color(candidate.party_name),
+            'party_symbol_url': (
+                f"{settings.MEDIA_URL}party_symbols/{symbol_filename}" if symbol_filename else None
+            ),
+            'counts': counts,
+            'total_1st': counts[1],
+        })
+
+    results_data.sort(key=lambda x: x['total_1st'], reverse=True)
+
+    from .blockchain import (
+        verify_chain as _verify_chain,
+        reconcile_votes_with_chain as _reconcile_votes,
+    )
+    all_blocks = list(BlockchainBlock.objects.order_by('block_index'))
+    chain_is_valid, chain_error = _verify_chain(all_blocks)
+
+    reconcile_ok, reconcile_info = _reconcile_votes(Vote.objects.all(), all_blocks, _decrypt_json)
+
+    ledger_status = LedgerStatus.objects.first()
+
+    errors = []
+    if not chain_is_valid:
+        errors.append(chain_error or 'Blockchain sequence or hash tampered')
+    if bad_blocks:
+        errors.append(f'Corrupted block contents detected: Block(s) {bad_blocks}')
+    if not reconcile_ok:
+        v_diff = reconcile_info.get('votes_without_block', 0)
+        b_diff = reconcile_info.get('blocks_without_vote', 0)
+        u_diff = reconcile_info.get('undecryptable_votes', 0)
+        reconcile_parts = []
+        if v_diff:
+            reconcile_parts.append(f'{v_diff} vote(s) in database do not match ledger')
+        if b_diff:
+            reconcile_parts.append(f'{b_diff} block(s) in ledger have no matching vote')
+        if u_diff:
+            reconcile_parts.append(f'{u_diff} undecryptable vote(s)')
+        errors.append('Vote record mismatch: ' + (', '.join(reconcile_parts) or str(reconcile_info)))
+    if ledger_status and not ledger_status.ok and ledger_status.detail:
+        if ledger_status.detail not in errors:
+            errors.append(ledger_status.detail)
+
+    ledger_ok = (len(errors) == 0)
+    integrity_error = ' | '.join(errors) if errors else ''
+
+    return render(request, 'voting/results.html', {
+        'results': results_data,
+        'total_votes': len(ballots),
+        'ledger_ok': ledger_ok,
+        'integrity_error': integrity_error,
+        'chain_is_valid': chain_is_valid,
+        'chain_error': chain_error,
+        'ledger_status': ledger_status,
+        'bad_blocks_count': len(bad_blocks),
+        'excluded_blocks': bad_blocks,
     })
 
 

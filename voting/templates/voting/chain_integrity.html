@@ -1,4 +1,4 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,7 +228,6 @@
                     <tr>
                         <th>#</th>
                         <th>Station</th>
-                        <th>Voted At (UTC)</th>
                         <th>Ballot Hash</th>
                         <th>Prev. Hash</th>
                         <th>Block Hash</th>
@@ -240,7 +239,6 @@
                     <tr class="{% if not is_valid and bad_index == block.block_index %}row-tampered{% endif %}">
                         <td><span class="block-index">#{{ block.block_index }}</span></td>
                         <td>{{ block.station_code }}</td>
-                        <td class="mono">{{ block.voted_at_iso }}</td>
                         <td><span class="hash-pill" title="{{ block.ballot_hash }}">{{ block.ballot_hash|slice:":20" }}&hellip;</span></td>
                         <td>
                             {% if block.block_index == 0 %}
