@@ -296,6 +296,14 @@ def get_party_symbol(party_name):
         "New Democratic Front": "new democratic front.png",
     }
     normalized_aliases = {
+        "sri lanka podujana peramuna (slpp)": "Sri Lanka Podujana Peramuna.png",
+        "slpp": "Sri Lanka Podujana Peramuna.png",
+        "samagi jana balawegaya (sjb)": "Samagi Jana Balawegaya.png",
+        "sjb": "Samagi Jana Balawegaya.png",
+        "national people's power (npp)": "National People's Power.png",
+        "npp": "National People's Power.png",
+        "mawbima janatha pakshaya (mjp)": "Mawbima Janatha Pakshaya.png",
+        "mjp": "Mawbima Janatha Pakshaya.png",
         "people's struggle alliance (jana aragala sandhanaya)": "People's Struggle Alliance (Jana Aragala Sandhanaya).png",
         "people's struggle alliance": "People's Struggle Alliance (Jana Aragala Sandhanaya).png",
         "peoples struggle alliance": "People's Struggle Alliance (Jana Aragala Sandhanaya).png",
@@ -353,19 +361,32 @@ def index(request):
             status=503)
 
     candidates_qs = Candidate.objects.all()
+    if any(c.full_name is None for c in candidates_qs):
+        try:
+            from django.core.management import call_command
+            call_command('sync_candidates')
+            candidates_qs = Candidate.objects.all()
+        except Exception as sync_e:
+            print(f"[AUTO-SYNC ERROR] {sync_e}")
+
     candidates = []
     for c in candidates_qs:
+        name_to_split = (c.full_name or c.ballot_name or '').strip()
+        if not name_to_split:
+            continue
         c.color = get_party_color(c.party_name)
         symbol_filename = get_party_symbol(c.party_name)
         c.party_symbol_url = (
             f"{settings.MEDIA_URL}party_symbols/{symbol_filename}" if symbol_filename else None
         )
-        name_parts = c.full_name.split()
-        c.short_name = f"{name_parts[0]} {name_parts[-1]}" if len(name_parts) >= 2 else c.full_name
+        if not c.ballot_name:
+            c.ballot_name = name_to_split
+        name_parts = name_to_split.split()
+        c.short_name = f"{name_parts[0]} {name_parts[-1]}" if len(name_parts) >= 2 else name_to_split
         candidates.append(c)
 
     # Sort candidates with 1st row priority: Anura Dissanayake, Dilith Jayaweera, Namal Rajapaksa, Sajith Premadasa
-    candidates.sort(key=lambda c: (get_candidate_sort_priority(c), c.ballot_name or c.full_name))
+    candidates.sort(key=lambda c: (get_candidate_sort_priority(c), c.ballot_name or c.full_name or ''))
 
     station_name = request.session.get('polling_station_name', '')
     
@@ -630,11 +651,11 @@ def verify_qr_token(request):
         data = json.loads(request.body)
         raw_token = data.get('qr_token', '').strip()
         if not raw_token:
-            return JsonResponse({'status': 'invalid', 'message': 'QR token is empty'}, status=400)
+            return JsonResponse({'status': 'invalid', 'message': 'QR කේතය හිස්ය / QR குறியீடு காலியாக உள்ளது / QR token is empty'}, status=400)
 
         coll = _get_qr_collection()
         if coll is None:
-            return JsonResponse({'status': 'error', 'message': 'QR Database connection failed'}, status=500)
+            return JsonResponse({'status': 'error', 'message': 'දත්ත සමුදා සම්බන්ධතාවය අසාර්ථක විය / தரவுத்தள இணைப்பு தோல்வியடைந்தது / QR Database connection failed'}, status=500)
 
         # Resolve document from raw token, UUID pattern, JSON payload, or NIC
         doc, token_str = _resolve_qr_document(raw_token)
@@ -647,7 +668,7 @@ def verify_qr_token(request):
             )
             return JsonResponse({
                 'status': 'invalid',
-                'message': 'QR කේතය හඳුනාගත නොහැක / Invalid or Unrecognized QR Code',
+                'message': 'QR කේතය හඳුනාගත නොහැක / QR குறியீட்டை அடையாளம் காண முடியவில்லை / Invalid or Unrecognized QR Code',
             })
 
         actual_token = doc.get('qr_token') or token_str
@@ -661,7 +682,7 @@ def verify_qr_token(request):
             )
             return JsonResponse({
                 'status': 'used',
-                'message': 'මෙම QR කේතය දැනටමත් භාවිතා කර ඇත / QR Code Already Used',
+                'message': 'මෙම QR කේතය දැනටමත් භාවිතා කර ඇත / இந்த QR குறியீடு ஏற்கனவே பயன்படுத்தப்பட்டுள்ளது / QR Code Already Used',
             })
 
         # Token is valid and unused! Mark as used immediately in MongoDB Atlas
@@ -686,7 +707,7 @@ def verify_qr_token(request):
         return JsonResponse({
             'status': 'success',
             'token': actual_token,
-            'message': 'අනුමත කරන ලදී / Authorization Confirmed',
+            'message': 'අනුමත කරන ලදී / அங்கீகரிக்கப்பட்டது / Authorization Confirmed',
             'redirect_url': '/voting/',
         })
 
@@ -734,7 +755,7 @@ def station_results(request):
 
         symbol_filename = get_party_symbol(candidate.party_name)
         results_data.append({
-            'name': candidate.ballot_name or candidate.full_name,
+            'name': candidate.ballot_name or candidate.full_name or 'Candidate',
             'party': candidate.party_name or 'Independent',
             'color': get_party_color(candidate.party_name),
             'party_symbol_url': (
@@ -892,4 +913,56 @@ def results(request):
 def success(request):
     """Render the vote confirmation screen."""
     return render(request, 'voting/success.html')
+
+
+# ---------------------------------------------------------------------------
+# Candidate Data API for Member 3 / External Integration
+# ---------------------------------------------------------------------------
+
+def get_candidates_api(request, candidate_id=None):
+    """
+    JSON API for Member 3 / external integration to fetch candidate details:
+    - Candidate ID (_id and candidateId)
+    - Candidate Name (full_name and ballot_name)
+    - Candidate Image (photo_url from Supabase or uploaded candidate_photo)
+    - Party Symbol Image (party_symbol_url or remote symbolImageUrl)
+    """
+    candidates_qs = Candidate.objects.all()
+
+    if candidate_id:
+        from bson import ObjectId
+        found = False
+        try:
+            candidates_qs = candidates_qs.filter(id=ObjectId(candidate_id))
+            found = candidates_qs.exists()
+        except Exception:
+            pass
+        if not found:
+            candidates_qs = Candidate.objects.filter(candidateId=candidate_id)
+
+    data = []
+    for c in candidates_qs:
+        # Resolve candidate photo
+        c_photo = c.photo_url or (c.candidate_photo.url if c.candidate_photo else '')
+        
+        # Resolve party symbol
+        symbol_filename = get_party_symbol(c.party_name)
+        symbol_url = f"{settings.MEDIA_URL}party_symbols/{symbol_filename}" if symbol_filename else ''
+
+        data.append({
+            'id': str(c.id),
+            'candidate_id': c.candidateId or '',
+            'full_name': c.full_name or '',
+            'ballot_name': c.ballot_name or c.full_name or '',
+            'party_name': c.party_name or '',
+            'candidate_image_url': c_photo,
+            'party_symbol_url': symbol_url,
+        })
+
+    if candidate_id:
+        if data:
+            return JsonResponse({'status': 'success', 'candidate': data[0]})
+        return JsonResponse({'status': 'error', 'message': 'Candidate not found'}, status=404)
+
+    return JsonResponse({'status': 'success', 'count': len(data), 'candidates': data})
 

@@ -756,10 +756,10 @@
         .feedback-state-box {
             width: 100%;
             max-width: 520px;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 14px 18px;
             text-align: center;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             margin: 2px auto;
         }
 
@@ -790,10 +790,142 @@
         .box-warning .state-icon { color: #d97706; font-size: 1.9rem; }
         .box-warning .state-heading { color: #b45309; font-weight: bold; font-size: 1.1rem; }
 
+        .state-heading-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        .state-heading-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        .state-heading-en {
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            line-height: 1.25;
+            margin-bottom: 6px;
+        }
+
+        .box-success .state-heading-si,
+        .box-success .state-heading-ta,
+        .box-success .state-heading-en { color: #008829; }
+
+        .box-error .state-heading-si,
+        .box-error .state-heading-ta,
+        .box-error .state-heading-en { color: #781830; }
+
+        .box-warning .state-heading-si,
+        .box-warning .state-heading-ta,
+        .box-warning .state-heading-en { color: #b45309; }
+
         .state-desc {
             font-size: 0.86rem;
             margin-top: 3px;
             color: #374151;
+            line-height: 1.4;
+        }
+
+        .desc-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.92rem;
+            color: #374151;
+            line-height: 1.35;
+            margin-bottom: 2px;
+        }
+        .desc-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.85rem;
+            color: #4b5563;
+            line-height: 1.35;
+            margin-bottom: 2px;
+        }
+        .desc-en {
+            font-size: 0.82rem;
+            color: #6b7280;
+            line-height: 1.35;
+        }
+
+        .auto-restart-hint {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(0, 0, 0, 0.12);
+            text-align: center;
+        }
+        .auto-restart-hint .hint-line-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.82rem;
+            color: #4b5563;
+            line-height: 1.3;
+        }
+        .auto-restart-hint .hint-line-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.78rem;
+            color: #4b5563;
+            line-height: 1.3;
+        }
+        .auto-restart-hint .hint-line-en {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+
+        .redirect-hint {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(0, 136, 41, 0.25);
+            text-align: center;
+            color: #008829;
+            font-weight: 700;
+        }
+        .redirect-hint .hint-line-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.86rem;
+            line-height: 1.3;
+        }
+        .redirect-hint .hint-line-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.82rem;
+            line-height: 1.3;
+        }
+        .redirect-hint .hint-line-en {
+            font-size: 0.78rem;
+            line-height: 1.3;
+        }
+
+        .guide-title-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.95rem;
+            color: #781830;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .step-lbl-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.78rem;
+            color: #4a5568;
+            margin-top: 1px;
+            line-height: 1.25;
+        }
+        .heading-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 1.1rem;
+            color: #781830;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 2px;
+        }
+        .instruction-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.88rem;
+            color: #4a5568;
+            margin: 2px 0;
+            line-height: 1.35;
         }
 
         /* Privacy-compliant Info Summary */
@@ -1025,57 +1157,62 @@
             <div class="instructions-guide-card">
                 <div class="guide-card-header">
                     <h2 class="guide-title-si">ඡන්දදායක මාර්ගෝපදේශය</h2>
+                    <div class="guide-title-ta">வாக்காளர் வழிகாட்டி</div>
                     <div class="guide-title-en">Step-by-Step Voter QR Scanning Guide</div>
                 </div>
 
                 <div class="steps-grid">
                     <!-- Step 1 -->
-                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_1.png" %}', '1. Keep printed QR code ready / මුද්‍රිත QR පත්‍රිකාව සූදානම් කරගන්න')">
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_1.png" %}', '1. Keep printed QR code ready / මුද්‍රිත QR පත්‍රිකාව සූදානම් කරගන්න / அச்சிடப்பட்ட QR குறியீட்டை தயார் செய்யவும்')">
                         <div class="step-image-wrap">
                             <img src="{% static 'voting/images/qr_step_1.png' %}" alt="Step 1: Keep printed QR code ready" class="step-img">
                         </div>
                         <div class="step-label">
                             <span class="step-lbl-si">මුද්‍රිත QR පත්‍රිකාව සූදානම් කරගන්න</span>
+                            <span class="step-lbl-ta">அச்சிடப்பட்ட QR குறியீட்டை தயார் செய்யவும்</span>
                             <span class="step-lbl-en">Keep printed QR code ready</span>
                         </div>
                     </div>
 
                     <!-- Step 2 -->
-                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_2.png" %}', '2. Present QR code to scanner / QR කේතය ස්කෑනරය වෙත යොමු කරන්න')">
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_2.png" %}', '2. Present QR code to scanner / QR කේතය ස්කෑනරය වෙත යොමු කරන්න / QR குறியீட்டை ஸ்கேனரை நோக்கி வைக்கவும்')">
                         <div class="step-image-wrap">
                             <img src="{% static 'voting/images/qr_step_2.png' %}" alt="Step 2: Present QR code to scanner" class="step-img">
                         </div>
                         <div class="step-label">
                             <span class="step-lbl-si">QR කේතය ස්කෑනරය වෙත යොමු කරන්න</span>
+                            <span class="step-lbl-ta">QR குறியீட்டை ஸ்கேனரை நோக்கி வைக்கவும்</span>
                             <span class="step-lbl-en">Present QR code to scanner</span>
                         </div>
                     </div>
 
                     <!-- Step 3 -->
-                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_3.png" %}', '3. Align inside scanner frame / රාමුව තුළ නිවැරදිව ස්ථානගත කරන්න')">
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_3.png" %}', '3. Align inside scanner frame / රාමුව තුළ නිවැරදිව ස්ථානගත කරන්න / சட்டத்திற்குள் சரியாக சீரமைக்கவும்')">
                         <div class="step-image-wrap">
                             <img src="{% static 'voting/images/qr_step_3.png' %}" alt="Step 3: Align inside scanner frame" class="step-img">
                         </div>
                         <div class="step-label">
                             <span class="step-lbl-si">රාමුව තුළ නිවැරදිව ස්ථානගත කරන්න</span>
+                            <span class="step-lbl-ta">சட்டத்திற்குள் சரியாக சீரமைக்கவும்</span>
                             <span class="step-lbl-en">Align inside scanner frame</span>
                         </div>
                     </div>
 
                     <!-- Step 4 -->
-                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_4.png" %}', '4. Hold steady and wait for verification / තහවුරු වන තෙක් අල්ලාගෙන සිටින්න')">
+                    <div class="step-card" onclick="openImageModal('{% static "voting/images/qr_step_4.png" %}', '4. Hold steady and wait for verification / තහවුරු වන තෙක් අල්ලාගෙන සිටින්න / சரிபார்க்கும் வரை நிலையாக வைத்திருக்கவும்')">
                         <div class="step-image-wrap">
                             <img src="{% static 'voting/images/qr_step_4.png' %}" alt="Step 4: Hold steady and wait for verification" class="step-img">
                         </div>
                         <div class="step-label">
                             <span class="step-lbl-si">තහවුරු වන තෙක් අල්ලාගෙන සිටින්න</span>
+                            <span class="step-lbl-ta">சரிபார்க்கும் வரை நிலையாக வைத்திருக்கவும்</span>
                             <span class="step-lbl-en">Hold steady and wait for verification</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="guide-footer-note">
-                    <span>💡 පියවර අනුපිළිවෙලින් අනුගමනය කරන්න &nbsp;•&nbsp; Follow the steps in order: 1 → 2 → 3 → 4</span>
+                    <span>පියවර අනුපිළිවෙලින් අනුගමනය කරන්න &nbsp;•&nbsp; படிகளை வரிசைப்படி பின்பற்றவும் &nbsp;•&nbsp; Follow the steps in order: 1 → 2 → 3 → 4</span>
                 </div>
             </div>
             <!-- END instructions-guide-card -->
@@ -1086,12 +1223,14 @@
                 <!-- 4. Card Title -->
                 <div class="card-title-header">
                     <h1 class="heading-sinhala">QR ඡන්දදායක සත්‍යාපනය</h1>
+                    <div class="heading-tamil">QR வாக்காளர் சரிபார்ப்பு</div>
                     <h2 class="heading-english">Voter Authorization Scanner</h2>
                 </div>
 
                 <!-- 5. Instruction Section -->
                 <div class="instruction-box" id="instructionBox">
                     <div class="instruction-si">බලයලත් ඡන්දදායක QR කේතය කැමරාව ඉදිරියේ තබන්න.</div>
+                    <div class="instruction-ta">அங்கீகரிக்கப்பட்ட வாக்காளர் QR குறியீட்டை கேமரா முன் வைக்கவும்.</div>
                     <div class="instruction-en">Place the authorized Voter QR Code inside the scanner area.</div>
                 </div>
 
@@ -1129,9 +1268,15 @@
                                 <div class="center-spinner" id="centerSpinner"></div>
                                 <div class="center-badge badge-success" id="badgeSuccess">✓</div>
                                 <div class="center-badge badge-error" id="badgeError">✕</div>
-                                <div class="center-badge badge-warning" id="badgeWarning">⚠️</div>
-                                <div class="center-badge badge-warning" id="badgeExpired">⏱️</div>
-                                <div class="center-badge badge-camera" id="badgeCamera">📷</div>
+                                <div class="center-badge badge-warning" id="badgeWarning">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                </div>
+                                <div class="center-badge badge-warning" id="badgeExpired">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                </div>
+                                <div class="center-badge badge-camera" id="badgeCamera">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1141,62 +1286,110 @@
 
                         <!-- State: SUCCESS -->
                         <div class="feedback-state-box box-success" id="panelSuccess" aria-live="polite">
-                            <div class="state-icon">✓</div>
-                            <div class="state-heading">VOTER AUTHORIZATION SUCCESSFUL</div>
-                            <div class="state-desc">QR verification completed successfully.</div>
+                            <div class="state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#00b33c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            </div>
+                            <div class="state-heading-si">ඡන්දදායක සත්‍යාපනය සාර්ථකයි</div>
+                            <div class="state-heading-ta">வாக்காளர் அனுமதி வெற்றிகரமானது</div>
+                            <div class="state-heading-en">VOTER AUTHORIZATION SUCCESSFUL</div>
+                            <div class="state-desc" id="successDesc">
+                                <div class="desc-si">QR සත්‍යාපනය සාර්ථකව අවසන් විය.</div>
+                                <div class="desc-ta">QR சரிபார்ப்பு வெற்றிகரமாக முடிந்தது.</div>
+                                <div class="desc-en">QR verification completed successfully.</div>
+                            </div>
                             <div class="privacy-summary">
                                 <div class="privacy-row">
-                                    <span>Authorization Status:</span>
+                                    <span>තත්ත්වය / நிலை / Status:</span>
                                     <strong style="color: #008829;">Verified (Active Session)</strong>
                                 </div>
                                 <div class="privacy-row">
-                                    <span>Polling Division:</span>
+                                    <span>කොට්ඨාසය / பிரிவு / Division:</span>
                                     <strong>{{ station_name|default:"Polling Station" }}</strong>
                                 </div>
                             </div>
                             <div class="redirect-hint">
-                                <span>➔ Redirecting to voting dashboard...</span>
+                                <div class="hint-line-si">ඡන්ද පුවරුව වෙත යොමු කෙරේ...</div>
+                                <div class="hint-line-ta">வாக்களிப்பு பலகைக்கு வழிநடத்தப்படுகிறது...</div>
+                                <div class="hint-line-en">➔ Redirecting to voting dashboard...</div>
                             </div>
                         </div>
 
                         <!-- State: INVALID -->
                         <div class="feedback-state-box box-error" id="panelInvalid" aria-live="polite">
-                            <div class="state-icon">✕</div>
-                            <div class="state-heading">INVALID QR CODE</div>
-                            <div class="state-desc" id="invalidDesc">QR කේතය හඳුනාගත නොහැක / Invalid or Unrecognized QR Code</div>
+                            <div class="state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c0405a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                            </div>
+                            <div class="state-heading-si">වලංගු නොවන QR කේතයකි</div>
+                            <div class="state-heading-ta">செல்லுபடியற்ற QR குறியீடு</div>
+                            <div class="state-heading-en">INVALID QR CODE</div>
+                            <div class="state-desc" id="invalidDesc">
+                                <div class="desc-si">QR කේතය හඳුනාගත නොහැක</div>
+                                <div class="desc-ta">QR குறியீட்டை அடையாளம் காண முடியவில்லை</div>
+                                <div class="desc-en">Invalid or Unrecognized QR Code</div>
+                            </div>
                             <div class="auto-restart-hint">
-                                <span>↺ Resuming scanner in a moment...</span>
+                                <div class="hint-line-si">ස්කෑනරය මොහොතකින් නැවත ආරම්භ වේ...</div>
+                                <div class="hint-line-ta">ஸ்கேனர் விரைவில் மீண்டும் தொடங்கும்...</div>
+                                <div class="hint-line-en">↺ Resuming scanner in a moment...</div>
                             </div>
                         </div>
 
                         <!-- State: USED -->
                         <div class="feedback-state-box box-warning" id="panelUsed" aria-live="polite">
-                            <div class="state-icon">⚠️</div>
-                            <div class="state-heading">QR CODE ALREADY USED</div>
-                            <div class="state-desc" id="usedDesc">මෙම QR කේතය දැනටමත් භාවිතා කර ඇත / QR Code Already Used</div>
+                            <div class="state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            </div>
+                            <div class="state-heading-si">QR කේතය දැනටමත් භාවිතා කර ඇත</div>
+                            <div class="state-heading-ta">QR குறியீடு ஏற்கனவே பயன்படுத்தப்பட்டது</div>
+                            <div class="state-heading-en">QR CODE ALREADY USED</div>
+                            <div class="state-desc" id="usedDesc">
+                                <div class="desc-si">මෙම QR කේතය දැනටමත් භාවිතා කර ඇත</div>
+                                <div class="desc-ta">இந்த QR குறியீடு ஏற்கனவே பயன்படுத்தப்பட்டுள்ளது</div>
+                                <div class="desc-en">QR Code Already Used</div>
+                            </div>
                             <div class="auto-restart-hint">
-                                <span>↺ Resuming scanner in a moment...</span>
+                                <div class="hint-line-si">ස්කෑනරය මොහොතකින් නැවත ආරම්භ වේ...</div>
+                                <div class="hint-line-ta">ஸ்கேனர் விரைவில் மீண்டும் தொடங்கும்...</div>
+                                <div class="hint-line-en">↺ Resuming scanner in a moment...</div>
                             </div>
                         </div>
 
                         <!-- State: EXPIRED -->
                         <div class="feedback-state-box box-warning" id="panelExpired" aria-live="polite">
-                            <div class="state-icon">⏱️</div>
-                            <div class="state-heading">QR CODE EXPIRED</div>
-                            <div class="state-desc">This authorization QR code is no longer valid.</div>
+                            <div class="state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            </div>
+                            <div class="state-heading-si">QR කේතය කල් ඉකුත් වී ඇත</div>
+                            <div class="state-heading-ta">QR குறியீடு காலாவதியானது</div>
+                            <div class="state-heading-en">QR CODE EXPIRED</div>
+                            <div class="state-desc">
+                                <div class="desc-si">මෙම බලයලත් QR කේතය තවදුරටත් වලංගු නොවේ.</div>
+                                <div class="desc-ta">இந்த அங்கீகார QR குறியீடு இனி செல்லுபடியாகாது.</div>
+                                <div class="desc-en">This authorization QR code is no longer valid.</div>
+                            </div>
                             <div class="auto-restart-hint">
-                                <span>↺ Resuming scanner in a moment...</span>
+                                <div class="hint-line-si">ස්කෑනරය මොහොතකින් නැවත ආරම්භ වේ...</div>
+                                <div class="hint-line-ta">ஸ்கேனர் விரைவில் மீண்டும் தொடங்கும்...</div>
+                                <div class="hint-line-en">↺ Resuming scanner in a moment...</div>
                             </div>
                         </div>
 
                         <!-- State: CAMERA_ERROR -->
                         <div class="feedback-state-box box-error" id="panelCameraError" aria-live="polite">
-                            <div class="state-icon">📷</div>
-                            <div class="state-heading">CAMERA UNAVAILABLE</div>
-                            <div class="state-desc">Unable to access the camera device.</div>
-                            <div style="margin-top: 8px;">
-                                <button type="button" class="btn-secondary" onclick="restartScanner()" style="padding: 5px 14px; font-size: 0.8rem;">
-                                    <span>↺</span> Retry Camera
+                            <div class="state-icon">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#c0405a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                            </div>
+                            <div class="state-heading-si">කැමරාව ක්‍රියා විරහිතයි</div>
+                            <div class="state-heading-ta">கேமரா கிடைக்கவில்லை</div>
+                            <div class="state-heading-en">CAMERA UNAVAILABLE</div>
+                            <div class="state-desc">
+                                <div class="desc-si">කැමරා උපාංගය වෙත ප්‍රවේශ විය නොහැක.</div>
+                                <div class="desc-ta">கேமரா சாதனத்தை அணுக முடியவில்லை.</div>
+                                <div class="desc-en">Unable to access the camera device.</div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <button type="button" class="btn-secondary" onclick="restartScanner()" style="padding: 6px 16px; font-size: 0.82rem;">
+                                    <span>↺</span> නැවත උත්සාහ කරන්න / மீண்டும் முயற்சி / Retry Camera
                                 </button>
                             </div>
                         </div>
@@ -1209,15 +1402,15 @@
                 <!-- State: SEARCHING (Default) -->
                 <div class="state-panel active" id="panelSearching" aria-live="polite">
                     <div class="status-badge-line color-green">
-                        <span class="status-dot-green">●</span> SCANNING
+                        <span class="status-dot-green">●</span> SCANNING / ස්කෑන් කරමින් / ஸ்கேன் செய்கிறது
                     </div>
-                    <div class="status-sub-text">Waiting for voter authorization QR code</div>
+                    <div class="status-sub-text">Waiting for voter authorization QR code • ඡන්දදායක QR කේතය සඳහා රැඳී සිටියි • வாக்காளர் QR குறியீட்டிற்காக காத்திருக்கிறது</div>
 
 
                     {% if sample_qrs %}
                     <div style="margin: 6px auto 10px; width: 100%; max-width: 440px; text-align: left;">
                         <div style="font-size: 0.74rem; color: #64748b; margin-bottom: 5px; font-weight: 600;">
-                            ⚡ Live MongoDB Tokens (Click to test):
+                            Live MongoDB Tokens (Click to test):
                         </div>
                         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
                             {% for tok in sample_qrs %}
@@ -1226,7 +1419,7 @@
                                     onmouseover="this.style.borderColor='#00bcd4'; this.style.background='#ecfeff';"
                                     onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc';"
                                     title="Verify against MongoDB: {{ tok }}">
-                                🔑 {{ tok|slice:":8" }}...
+                                {{ tok|slice:":8" }}...
                             </button>
                             {% endfor %}
                         </div>
@@ -1235,7 +1428,7 @@
 
                     <div class="actions-strip">
                         <button type="button" class="btn-secondary" onclick="restartScanner()">
-                            <span>↺</span> Restart Camera
+                            <span>↺</span> නැවත ආරම්භ කරන්න / மீண்டும் தொடங்கு / Restart Camera
                         </button>
                     </div>
                 </div>
@@ -1252,13 +1445,13 @@
         <div class="image-modal-content" onclick="event.stopPropagation()">
             <img id="imageModalImg" src="" alt="Enlarged Step Illustration">
             <div class="image-modal-caption" id="imageModalCaption"></div>
-            <button type="button" class="image-modal-close" onclick="closeImageModal()">✕ හරි / Close</button>
+            <button type="button" class="image-modal-close" onclick="closeImageModal()">✕ හරි / சரி / Close</button>
         </div>
     </div>
 
     <!-- ── 10. Footer (Exact System Styling) ── -->
     <footer class="footer">
-        <span>🔒 Secure Voter Verification • Single-Use QR Authorization</span>
+        <span>ආරක්ෂිත ඡන්දදායක සත්‍යාපනය &nbsp;•&nbsp; பாதுகாப்பான வாக்காளர் சரிபார்ப்பு &nbsp;•&nbsp; Secure Voter Verification</span>
     </footer>
 
     <!-- ================================================================= -->
@@ -1344,10 +1537,22 @@
             }
         }
 
-        // ── Camera Initialization & Subtle Canvas Fallback ──
+        // ── Camera Initialization & Stream Handling ──
         async function startCamera() {
             if (cameraStream) {
-                cameraStream.getTracks().forEach(t => t.stop());
+                const tracks = cameraStream.getVideoTracks();
+                if (tracks.length > 0 && tracks[0].readyState === 'live') {
+                    videoFeed.style.display = 'block';
+                    cameraCanvas.style.display = 'none';
+                    if (videoFeed.paused) {
+                        try { await videoFeed.play(); } catch(e) {}
+                    }
+                    startScanLoop();
+                    return;
+                }
+                try {
+                    cameraStream.getTracks().forEach(t => t.stop());
+                } catch (e) {}
                 cameraStream = null;
             }
 
@@ -1362,13 +1567,35 @@
                     videoFeed.style.display = 'block';
                     cameraCanvas.style.display = 'none';
                     if (animId) cancelAnimationFrame(animId);
+                    try {
+                        await videoFeed.play();
+                    } catch (playErr) {
+                        console.warn('Auto play videoFeed failed:', playErr);
+                    }
+                    startScanLoop();
                     return;
                 }
             } catch (err) {
-                // If permission is denied or camera hardware absent, render crisp canvas grid
+                console.warn('Camera access denied or unavailable:', err);
             }
 
             startCanvasSimulation();
+        }
+
+        function ensureCameraRunning() {
+            if (cameraStream) {
+                const tracks = cameraStream.getVideoTracks();
+                if (tracks.length > 0 && tracks[0].readyState === 'live') {
+                    videoFeed.style.display = 'block';
+                    cameraCanvas.style.display = 'none';
+                    if (videoFeed.paused) {
+                        videoFeed.play().catch(e => console.warn(e));
+                    }
+                    startScanLoop();
+                    return;
+                }
+            }
+            startCamera();
         }
 
         function startCanvasSimulation() {
@@ -1519,7 +1746,7 @@
                     laserLine.style.display = 'none';
                     scannerDim.classList.add('active');
 
-                    hudTopLabel.textContent = 'VERIFIED';
+                    hudTopLabel.textContent = 'VERIFIED / තහවුරු විය / சரிபார்க்கப்பட்டது';
                     hudStatusLabel.textContent = 'AUTHORIZATION CONFIRMED';
                     hudStatusLabel.style.color = '#00b33c';
                     break;
@@ -1529,7 +1756,7 @@
                     laserLine.style.display = 'none';
                     scannerDim.classList.add('active');
 
-                    hudTopLabel.textContent = 'ERROR';
+                    hudTopLabel.textContent = 'ERROR / දෝෂයකි / பிழை';
                     hudStatusLabel.textContent = 'INVALID QR CODE';
                     hudStatusLabel.style.color = '#c0405a';
 
@@ -1544,7 +1771,7 @@
                     laserLine.style.display = 'none';
                     scannerDim.classList.add('active');
 
-                    hudTopLabel.textContent = 'WARNING';
+                    hudTopLabel.textContent = 'WARNING / අවවාදයයි / எச்சரிக்கை';
                     hudStatusLabel.textContent = 'QR CODE ALREADY USED';
                     hudStatusLabel.style.color = '#d97706';
 
@@ -1559,7 +1786,7 @@
                     laserLine.style.display = 'none';
                     scannerDim.classList.add('active');
 
-                    hudTopLabel.textContent = 'EXPIRED';
+                    hudTopLabel.textContent = 'EXPIRED / කල් ඉකුත් විය / காலாவதியானது';
                     hudStatusLabel.textContent = 'QR CODE EXPIRED';
                     hudStatusLabel.style.color = '#d97706';
 
@@ -1573,7 +1800,7 @@
                     laserLine.style.display = 'none';
                     scannerDim.classList.add('active');
 
-                    hudTopLabel.textContent = 'HARDWARE';
+                    hudTopLabel.textContent = 'CAMERA / කැමරාව / கேமரா';
                     hudStatusLabel.textContent = 'CAMERA UNAVAILABLE';
                     hudStatusLabel.style.color = '#94a3b8';
                     break;
@@ -1613,26 +1840,51 @@
                     }, SUCCESS_REDIRECT_DELAY);
                 } else if (data.status === 'used') {
                     const desc = document.getElementById('usedDesc');
-                    if (desc && data.message) desc.textContent = data.message;
+                    if (desc && data.message) {
+                        const parts = data.message.split(' / ');
+                        if (parts.length === 3) {
+                            desc.innerHTML = `<div class="desc-si">${parts[0]}</div><div class="desc-ta">${parts[1]}</div><div class="desc-en">${parts[2]}</div>`;
+                        } else {
+                            desc.textContent = data.message;
+                        }
+                    }
                     setScannerState('used');
                 } else if (data.status === 'invalid') {
                     const desc = document.getElementById('invalidDesc');
-                    if (desc && data.message) desc.textContent = data.message;
+                    if (desc && data.message) {
+                        const parts = data.message.split(' / ');
+                        if (parts.length === 3) {
+                            desc.innerHTML = `<div class="desc-si">${parts[0]}</div><div class="desc-ta">${parts[1]}</div><div class="desc-en">${parts[2]}</div>`;
+                        } else {
+                            desc.textContent = data.message;
+                        }
+                    }
                     setScannerState('invalid');
                 } else {
                     const desc = document.getElementById('invalidDesc');
-                    if (desc) desc.textContent = data.message || 'Verification failed';
+                    if (desc) {
+                        const msg = data.message || 'සත්‍යාපනය අසාර්ථක විය / சரிபார்ப்பு தோல்வியடைந்தது / Verification failed';
+                        const parts = msg.split(' / ');
+                        if (parts.length === 3) {
+                            desc.innerHTML = `<div class="desc-si">${parts[0]}</div><div class="desc-ta">${parts[1]}</div><div class="desc-en">${parts[2]}</div>`;
+                        } else {
+                            desc.textContent = msg;
+                        }
+                    }
                     setScannerState('invalid');
                 }
             } catch (err) {
                 console.error('QR Verification error:', err);
                 const desc = document.getElementById('invalidDesc');
-                if (desc) desc.textContent = 'Verification connection error';
+                if (desc) {
+                    desc.innerHTML = '<div class="desc-si">සම්බන්ධතා දෝෂයකි</div><div class="desc-ta">இணைப்பு பிழை</div><div class="desc-en">Connection error occurred</div>';
+                }
                 setScannerState('invalid');
             }
         }
 
         function testToken(tok) {
+            lastScannedToken = null;
             verifyQrTokenBackend(tok);
         }
 
@@ -1642,7 +1894,7 @@
 
         document.addEventListener('keydown', function(e) {
             if (currentState !== 'searching') return;
-            if (e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
 
             const now = Date.now();
 
@@ -1651,6 +1903,8 @@
                     e.preventDefault();
                     const scannedToken = scannerKeyBuffer.trim();
                     scannerKeyBuffer = '';
+                    lastScannedToken = scannedToken;
+                    lastScannedTime = now;
                     verifyQrTokenBackend(scannedToken);
                 }
                 return;
@@ -1676,13 +1930,28 @@
             }
         }
 
+        let scanLoopActive = false;
         let isFrameProcessing = false;
+        let lastScannedToken = null;
+        let lastScannedTime = 0;
+        const COOLDOWN_SAME_TOKEN_MS = 3500; // Ignore re-scanning exact same rejected token for 3.5s so user can pull it away
         const offscreenCanvas = document.createElement('canvas');
         const offscreenCtx = offscreenCanvas.getContext('2d');
 
+        function startScanLoop() {
+            if (!scanLoopActive) {
+                scanLoopActive = true;
+                requestAnimationFrame(scanVideoFrame);
+            }
+        }
+
         async function scanVideoFrame() {
+            if (!scanLoopActive) return;
+
+            // In non-searching states, while video is warming up, or while a code is being processed:
+            // remain in the animation loop but do not perform heavy detection
             if (currentState !== 'searching' || !videoFeed || videoFeed.readyState < 2 || isFrameProcessing) {
-                if (cameraStream) requestAnimationFrame(scanVideoFrame);
+                requestAnimationFrame(scanVideoFrame);
                 return;
             }
 
@@ -1694,7 +1963,7 @@
                     try {
                         const barcodes = await barcodeDetector.detect(videoFeed);
                         if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                            detectedCode = barcodes[0].rawValue;
+                            detectedCode = barcodes[0].rawValue.trim();
                         }
                     } catch (e) {}
                 }
@@ -1709,26 +1978,37 @@
                         inversionAttempts: "dontInvert"
                     });
                     if (code && code.data) {
-                        detectedCode = code.data;
+                        detectedCode = code.data.trim();
                     }
                 }
 
                 if (detectedCode) {
+                    const now = Date.now();
+                    // Cooldown on exact same token to avoid rapid loop while user moves it away
+                    if (detectedCode === lastScannedToken && (now - lastScannedTime) < COOLDOWN_SAME_TOKEN_MS) {
+                        requestAnimationFrame(scanVideoFrame);
+                        return;
+                    }
+
+                    lastScannedToken = detectedCode;
+                    lastScannedTime = now;
                     isFrameProcessing = true;
                     setScannerState('detected');
                     setTimeout(() => {
                         verifyQrTokenBackend(detectedCode);
                         isFrameProcessing = false;
                     }, 400);
+
+                    // Scan loop stays alive!
+                    requestAnimationFrame(scanVideoFrame);
                     return;
                 }
-            } catch (err) {}
-
-            if (cameraStream) {
-                requestAnimationFrame(scanVideoFrame);
+            } catch (err) {
+                console.warn('Frame scan error:', err);
             }
-        }
 
+            requestAnimationFrame(scanVideoFrame);
+        }
 
         // ── Simulated / Quick Verification Flow ──
         function startSimulatedVerification() {
@@ -1765,9 +2045,10 @@
             clearAutoRestart();
             clearSimulationTimers();
             scannerKeyBuffer = '';
-            setScannerState('searching');
             isFrameProcessing = false;
-            startCamera();
+            setScannerState('searching');
+            ensureCameraRunning();
+            startScanLoop();
         }
 
         // ── Double-Click & Key Controls for Seamless Testing ──
@@ -1843,7 +2124,7 @@
         setScannerState('searching');
         startCamera();
         videoFeed.addEventListener('play', () => {
-            requestAnimationFrame(scanVideoFrame);
+            startScanLoop();
         });
 
     </script>

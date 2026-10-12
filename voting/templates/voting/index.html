@@ -960,6 +960,8 @@
                     <div class="card-img-container">
                         {% if candidate.candidate_photo %}
                         <img src="{{ candidate.candidate_photo.url }}" alt="{{ candidate.ballot_name }}">
+                        {% elif candidate.photo_url %}
+                        <img src="{{ candidate.photo_url }}" alt="{{ candidate.ballot_name }}">
                         {% else %}
                         <span class="card-img-placeholder">👤</span>
                         {% endif %}
@@ -976,11 +978,11 @@
                     </div>
                     <div class="vote-buttons">
                         <button class="vote-btn"
-                            onclick="selectPreference(1, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% else %}null{% endif %}, this)">1</button>
+                            onclick="selectPreference(1, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% elif candidate.photo_url %}'{{ candidate.photo_url|escapejs }}'{% else %}null{% endif %}, this)">1</button>
                         <button class="vote-btn"
-                            onclick="selectPreference(2, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% else %}null{% endif %}, this)">2</button>
+                            onclick="selectPreference(2, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% elif candidate.photo_url %}'{{ candidate.photo_url|escapejs }}'{% else %}null{% endif %}, this)">2</button>
                         <button class="vote-btn"
-                            onclick="selectPreference(3, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% else %}null{% endif %}, this)">3</button>
+                            onclick="selectPreference(3, '{{ candidate.id }}', '{{ candidate.ballot_name|escapejs }}', {% if candidate.candidate_photo %}'{{ candidate.candidate_photo.url|escapejs }}'{% elif candidate.photo_url %}'{{ candidate.photo_url|escapejs }}'{% else %}null{% endif %}, this)">3</button>
                     </div>
                 </div>
                 {% if forloop.counter|divisibleby:4 or forloop.last %}
