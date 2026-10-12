@@ -102,20 +102,24 @@
         /* ── Tabs ── */
         .tabs-container {
             display: flex;
-            background: #f5f5f5;
+            background: #f7f7f8;
             border-bottom: 1px solid #e0e0e0;
         }
 
         .tab {
             flex: 1;
             text-align: center;
-            padding: 15px 10px;
+            padding: 12px 10px;
             font-weight: 600;
             color: #666;
             cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.95rem;
+            transition: all 0.25s ease;
             border-bottom: 3px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
         }
 
         .tab:hover { background: #eee; }
@@ -126,26 +130,73 @@
             background: white;
         }
 
+        .tab-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.25;
+        }
+
+        .tab-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+
+        .tab-en {
+            font-size: 0.76rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            opacity: 0.85;
+            line-height: 1.2;
+        }
+
         /* ── Body ── */
         .login-body {
-            padding: 30px 35px;
+            padding: 28px 32px 30px;
         }
 
         .login-title {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
 
         .login-title h2 {
             font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
             color: #781830;
-            font-size: 1.4rem;
-            margin-bottom: 4px;
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 2px;
         }
 
-        .login-title p {
+        .login-title .title-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            color: #781830;
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .login-title .title-en {
+            color: #4b0082;
+            font-size: 0.92rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .login-title .subtitle-text {
+            color: #555;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .login-title .subtitle-ta {
             color: #666;
-            font-size: 0.88rem;
+            font-size: 0.82rem;
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            line-height: 1.4;
+            margin-top: 2px;
         }
 
         /* ── Messages ── */
@@ -157,6 +208,7 @@
             margin-bottom: 20px;
             border-left: 4px solid #c00;
             font-size: 0.9rem;
+            line-height: 1.45;
         }
 
         .success-message {
@@ -167,6 +219,7 @@
             margin-bottom: 20px;
             border-left: 4px solid #2e7d32;
             font-size: 0.9rem;
+            line-height: 1.45;
         }
 
         .warning-message {
@@ -177,6 +230,7 @@
             margin-bottom: 20px;
             border-left: 4px solid #e65100;
             font-size: 0.9rem;
+            line-height: 1.45;
         }
 
         /* ── Form ── */
@@ -191,12 +245,28 @@
             margin-bottom: 8px;
             color: #333;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.92rem;
+            line-height: 1.45;
         }
 
-        .form-label .icon {
-            color: #781830;
-            margin-right: 5px;
+        .form-label .lbl-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            color: #222;
+        }
+
+        .form-label .lbl-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            color: #333;
+        }
+
+        .form-label .lbl-en {
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-label .lbl-sep {
+            color: #bbb;
+            margin: 0 4px;
         }
 
         .input-wrap { position: relative; }
@@ -231,27 +301,39 @@
             background: none;
             border: none;
             cursor: pointer;
-            font-size: 1.1rem;
-            color: #999;
-            padding: 4px;
+            color: #777;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: color 0.2s;
         }
 
         .toggle-vis:hover { color: #781830; }
 
+        .toggle-vis svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+        }
+
         /* ── Submit ── */
         .btn-login {
             width: 100%;
-            padding: 16px;
+            padding: 12px 16px;
             background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(120, 24, 48, 0.3);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
         }
 
         .btn-login:hover {
@@ -262,21 +344,58 @@
         .btn-login:active   { transform: translateY(0); }
         .btn-login.loading  { opacity: 0.7; cursor: wait; transform: none; }
 
+        .btn-line-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+
+        .btn-line-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 600;
+            line-height: 1.3;
+            opacity: 0.96;
+        }
+
+        .btn-line-en {
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            opacity: 0.9;
+            line-height: 1.25;
+        }
+
         /* ── Footer ── */
         .login-footer {
             text-align: center;
-            margin-top: 24px;
-            padding-top: 24px;
+            margin-top: 22px;
+            padding-top: 20px;
             border-top: 1px solid #e0e0e0;
         }
 
-        .footer-text {
-            color: #666;
-            font-size: 0.84rem;
-            line-height: 1.6;
+        .footer-line-si {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            color: #555;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            margin-bottom: 3px;
         }
 
-        .footer-icon { color: #781830; margin-right: 4px; }
+        .footer-line-ta {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            color: #666;
+            font-size: 0.82rem;
+            line-height: 1.45;
+            margin-bottom: 3px;
+        }
+
+        .footer-line-en {
+            color: #777;
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
 
         /* ── Responsive ── */
         @media (max-width: 600px) {
@@ -311,10 +430,14 @@
         <!-- Role Tabs -->
         <div class="tabs-container">
             <div class="tab {% if active_tab == 'station' or not active_tab %}active{% endif %}" onclick="switchTab('station')">
-                🗳️ Polling Station
+                <span class="tab-si">ඡන්ද මධ්‍යස්ථානය</span>
+                <span class="tab-ta">வாக்குச்சாவடி</span>
+                <span class="tab-en">Polling Station</span>
             </div>
             <div class="tab {% if active_tab == 'results' %}active{% endif %}" onclick="switchTab('results')">
-                📈 Station Results
+                <span class="tab-si">ස්ථාන ප්‍රතිඵල</span>
+                <span class="tab-ta">நிலைய முடிவுகள்</span>
+                <span class="tab-en">Station Results</span>
             </div>
         </div>
 
@@ -336,7 +459,10 @@
             <div id="station-form" class="form-section {% if active_tab == 'station' or not active_tab %}active{% endif %}">
                 <div class="login-title">
                     <h2>ආරක්ෂිත ස්ථාන යතුර</h2>
-                    <p>Enter your unique station key to unlock the voting terminal</p>
+                    <div class="title-ta">பாதுகாப்பான நிலைய விசை</div>
+                    <div class="title-en">Secure Station Key</div>
+                    <p class="subtitle-text">Enter your unique station key to unlock the voting terminal</p>
+                    <p class="subtitle-ta">வாக்குப்பதிவு முனையத்தை திறக்க உங்கள் பிரத்தியேக நிலைய விசையை உள்ளிடவும்</p>
                 </div>
 
                 <form method="post" action="{% url 'station_login' %}" autocomplete="off" onsubmit="setLoading(this)">
@@ -344,25 +470,43 @@
                     <input type="hidden" name="destination" value="voting">
                     <div class="form-group">
                         <label for="login_key" class="form-label">
-                            <span class="icon">🔑</span>Station Login Key / ස්ථාන ප්‍රවේශ යතුර
+                            <span class="lbl-si">ස්ථාන ප්‍රවේශ යතුර</span>
+                            <span class="lbl-sep">/</span>
+                            <span class="lbl-ta">நிலைய உள்நுழைவு விசை</span>
+                            <span class="lbl-sep">/</span>
+                            <span class="lbl-en">Station Login Key</span>
                         </label>
                         <div class="input-wrap">
                             <input type="password" id="login_key" name="login_key" class="form-input mono"
                                 placeholder="Enter your unique station key" required autofocus autocomplete="new-password">
-                            <button type="button" class="toggle-vis" onclick="togglePassword('login_key', this)" title="Show / Hide">👁</button>
+                            <button type="button" class="toggle-vis" onclick="togglePassword('login_key', this)" title="Show / Hide" aria-label="Toggle password visibility">
+                                <svg class="eye-open" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-closed" style="display:none;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="btn-login">
-                        🔓 ඡන්ද ස්ථානය ඇරීම / Unlock Voting Terminal
+                        <span class="btn-line-si">ඡන්ද මධ්‍යස්ථානය ඇරීම</span>
+                        <span class="btn-line-ta">வாக்குச்சாவடியைத் திறக்கவும்</span>
+                        <span class="btn-line-en">Unlock Voting Terminal</span>
                     </button>
                 </form>
                 
                 <div class="login-footer">
-                    <div class="footer-text">
-                        <span class="footer-icon">🔒</span> Each polling station has a unique key — station-specific access only
-                    </div>
-                    <div class="footer-text" style="margin-top: 6px;">
+                    <div class="footer-line-si">
                         ස්ථානයේ ප්‍රවේශ යතුර අනෙකුත් ස්ථාන සඳහා ක්‍රියා නොකරයි
+                    </div>
+                    <div class="footer-line-ta">
+                        இந்நிலையத்தின் பிரவேச விசை ஏனைய நிலையங்களுக்கு செல்லுபடியாகாது
+                    </div>
+                    <div class="footer-line-en">
+                        Each polling station has a unique key — station-specific access only
                     </div>
                 </div>
             </div>
@@ -371,7 +515,10 @@
             <div id="results-form" class="form-section {% if active_tab == 'results' %}active{% endif %}">
                 <div class="login-title">
                     <h2>ස්ථාන ප්‍රතිඵල</h2>
-                    <p>Enter your station key to view local results</p>
+                    <div class="title-ta">நிலைய முடிவுகள்</div>
+                    <div class="title-en">Station Results</div>
+                    <p class="subtitle-text">Enter your station key to view local results</p>
+                    <p class="subtitle-ta">உள்ளூர் முடிவுகளைக் காண உங்கள் நிலைய விசையை உள்ளிடவும்</p>
                 </div>
 
                 <form method="post" action="{% url 'station_login' %}" autocomplete="off" onsubmit="setLoading(this)">
@@ -379,25 +526,43 @@
                     <input type="hidden" name="destination" value="results">
                     <div class="form-group">
                         <label for="results_key" class="form-label">
-                            <span class="icon">🔑</span>Station Login Key / ස්ථාන ප්‍රවේශ යතුර
+                            <span class="lbl-si">ස්ථාන ප්‍රවේශ යතුර</span>
+                            <span class="lbl-sep">/</span>
+                            <span class="lbl-ta">நிலைய உள்நுழைவு விசை</span>
+                            <span class="lbl-sep">/</span>
+                            <span class="lbl-en">Station Login Key</span>
                         </label>
                         <div class="input-wrap">
                             <input type="password" id="results_key" name="login_key" class="form-input mono"
                                 placeholder="Enter your unique station key" required autocomplete="new-password">
-                            <button type="button" class="toggle-vis" onclick="togglePassword('results_key', this)" title="Show / Hide">👁</button>
+                            <button type="button" class="toggle-vis" onclick="togglePassword('results_key', this)" title="Show / Hide" aria-label="Toggle password visibility">
+                                <svg class="eye-open" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg class="eye-closed" style="display:none;" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="btn-login" style="background: linear-gradient(135deg, #005f56 0%, #00897b 100%);">
-                        📈 ප්‍රතිඵල පෙන්වන්න / View Results
+                        <span class="btn-line-si">ප්‍රතිඵල පෙන්වන්න</span>
+                        <span class="btn-line-ta">முடிவுகளைக் காட்டு</span>
+                        <span class="btn-line-en">View Results</span>
                     </button>
                 </form>
                 
                 <div class="login-footer">
-                    <div class="footer-text">
-                        <span class="footer-icon">🔒</span> View votes submitted exclusively from your station
-                    </div>
-                    <div class="footer-text" style="margin-top: 6px;">
+                    <div class="footer-line-si">
                         ඔබේ ස්ථානයෙන් පමණක් ලබාදුන් ඡන්ද බලන්න
+                    </div>
+                    <div class="footer-line-ta">
+                        உங்கள் நிலையத்திலிருந்து அளிக்கப்பட்ட வாக்குகளை மட்டும் காண்க
+                    </div>
+                    <div class="footer-line-en">
+                        View votes submitted exclusively from your station
                     </div>
                 </div>
             </div>
@@ -427,23 +592,27 @@
             }
         }
 
-        // Toggle password visibility
+        // Toggle password visibility (SVG, no emoji)
         function togglePassword(inputId, btn) {
             const input = document.getElementById(inputId);
+            const eyeOpen = btn.querySelector('.eye-open');
+            const eyeClosed = btn.querySelector('.eye-closed');
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.textContent = '🔒';
+                if (eyeOpen) eyeOpen.style.display = 'none';
+                if (eyeClosed) eyeClosed.style.display = 'block';
             } else {
                 input.type = 'password';
-                btn.textContent = '👁';
+                if (eyeOpen) eyeOpen.style.display = 'block';
+                if (eyeClosed) eyeClosed.style.display = 'none';
             }
         }
 
-        // Loading state on submit
+        // Loading state on submit (Trilingual, no emoji)
         function setLoading(form) {
             const btn = form.querySelector('button[type="submit"]');
             btn.classList.add('loading');
-            btn.textContent = 'Authenticating…';
+            btn.innerHTML = '<span class="btn-line-si">තහවුරු කරමින්...</span><span class="btn-line-ta">உறுதிப்படுத்தப்படுகிறது...</span><span class="btn-line-en">Authenticating…</span>';
         }
     </script>
 </body>

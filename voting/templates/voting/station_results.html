@@ -408,9 +408,9 @@
 
     <!-- Station Strip -->
     <div class="station-strip">
-        <span>🗳️ &nbsp;{{ station_name }} &nbsp;·&nbsp; Station Results</span>
+        <span>{{ station_name }} &nbsp;·&nbsp; ස්ථාන ප්‍රතිඵල / நிலைய முடிவுகள் / Station Results</span>
         <span>
-            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">End Session</a>
+            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">සැසිය අවසන් කරන්න / அமர்வை முடிக்கவும் / End Session</a>
         </span>
     </div>
 
@@ -420,7 +420,7 @@
         <!-- Header -->
         <div class="results-header">
             <div>
-                <h1 class="results-title">ස්ථාන ප්‍රතිඵල</h1>
+                <h1 class="results-title">ස්ථාන ප්‍රතිඵල <span style="font-size:1.1rem;font-weight:600;color:#666;font-family:'Latha',sans-serif;">/ நிலைய முடிவுகள்</span></h1>
                 <p class="results-subtitle">
                     Station Vote Count &nbsp;·&nbsp;
                     <strong>{{ station_name }}</strong>
@@ -437,7 +437,7 @@
                     Tampered
                 </button>
                 {% endif %}
-                <a href="{% url 'station_logout' %}" class="btn btn-logout">End Session</a>
+                <a href="{% url 'station_logout' %}" class="btn btn-logout">සැසිය අවසන් කරන්න / அமர்வை முடிக்கவும் / End Session</a>
             </div>
         </div>
 

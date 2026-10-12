@@ -88,20 +88,31 @@ class Command(BaseCommand):
                 doc.get('name') or
                 'Unknown Candidate'
             )
-            ballot_name = (
+            raw_ballot = (
                 doc.get(FIELD_MAP['ballot_name']) or
                 ballot_details.get('ballotName') or
                 doc.get('ballotName') or
                 full_name
             )
+            if 'balaya' in str(raw_ballot).lower() or 'slcp' in str(raw_ballot).lower():
+                ballot_name = full_name
+            else:
+                ballot_name = raw_ballot
+
             party_name = (
                 doc.get(FIELD_MAP['party_name']) or
                 party_affiliation.get('partyName') or
                 doc.get('party') or
                 ''
             )
+            if not party_name:
+                sym_url = party_affiliation.get('partySymbolUrl') or ''
+                if 'mawbima' in sym_url.lower() or 'sarvajana' in str(raw_ballot).lower():
+                    party_name = 'Mawbima Janatha Pakshaya'
+
             photo_url = (
                 doc.get(FIELD_MAP['photo_url']) or
+                doc.get('candidateImageUrl') or
                 ballot_details.get('symbolImageUrl') or
                 doc.get('photo') or
                 doc.get('image') or

@@ -20,5 +20,10 @@ urlpatterns = [
     path('',        views.index,       name='voting_index'),
     path('submit/', views.submit_vote, name='submit_vote'),
     path('success/', views.success,   name='vote_success'),
+    # -------------------------------------------------------------------------
+    # Candidate Data API (Member 3 & External Services)
+    # -------------------------------------------------------------------------
+    path('api/candidates/', views.get_candidates_api, name='api_candidates'),
+    path('api/candidates/<str:candidate_id>/', views.get_candidates_api, name='api_candidate_detail'),
 ]
 
