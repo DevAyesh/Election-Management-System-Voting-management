@@ -12,9 +12,45 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env
+load_dotenv(BASE_DIR / '.env')
+
+# Resilient DNS resolver for Windows MongoDB Atlas SRV lookups
+try:
+    import dns.resolver
+    dns.resolver.default_resolver = dns.resolver.Resolver()
+    dns.resolver.default_resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+except Exception:
+    pass
+
+# Central Election MongoDB Connection Settings
+ELECTION_MONGO_URI = (
+    os.environ.get("ELECTION_MONGO_URI") or
+    os.environ.get("MONGODB_URI") or
+    os.environ.get("MEMBER3_MONGO_URI") or
+    ""
+)
+ELECTION_DB = os.environ.get("ELECTION_DB") or os.environ.get("MEMBER3_DB") or "election"
+ELECTION_COLLECTION = (
+    os.environ.get("ELECTION_COLLECTION") or
+    os.environ.get("MEMBER3_COLLECTION") or
+    "candidates"
+)
+
+# Backward-compatibility alias
+MEMBER3_MONGO_URI = ELECTION_MONGO_URI
+MEMBER3_DB = ELECTION_DB
+MEMBER3_COLLECTION = ELECTION_COLLECTION
+
+# QR Verification MongoDB Connection Settings
+QR_MONGO_URI = os.environ.get("QR_MONGO_URI", "")
+QR_DB = os.environ.get("QR_DB", "Election_Management_System")
+QR_COLLECTION = os.environ.get("QR_COLLECTION", "qr_codes")
 
 
 # Quick-start development settings - unsuitable for production
@@ -25,6 +61,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-1v_@o@rwvbz6(a
 
 # Encryption Key for Voting Data
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', 'Avq7dnH43UU0YcC1PkbG7mQNmer_n9Jya5NSLOpFVQQ=')
+LEDGER_HMAC_KEY = os.environ["LEDGER_HMAC_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
@@ -59,7 +96,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Rate limiting for polling station logins
+    'voting.middleware.RateLimitMiddleware',
 ]
+
+# Rate limiting settings (relaxed for development and testing)
+RATE_LIMIT_STATION_LOGIN  = 50   # max failed attempts before lockout
+RATE_LIMIT_WINDOW_SECONDS = 30   # lockout window in seconds (30 seconds)
 
 ROOT_URLCONF = 'election_portal.urls'
 
@@ -86,16 +129,24 @@ WSGI_APPLICATION = 'election_portal.wsgi.application'
 
 from django_mongodb_backend import parse_uri
 
-# MongoDB as default database for all models (auth, candidates, voting)
-DATABASES = {
-    'default': {
-        'ENGINE': 'django_mongodb_backend',
-        'NAME': 'election_portal_db', # 💡 මෙහිදී ඔබේ database එකට නමක් දෙන්න. උදා: 'election_portal_db'
-        'CLIENT': {
-            'host': 'mongodb://localhost:27017/', # 💡 මෙය ඔබගේ Compass connection URL එකට සමාන විය යුතුය.
+_default_mongo_uri = (
+    os.environ.get('ELECTION_MONGO_URI') or
+    os.environ.get('MONGODB_URI') or
+    os.environ.get('MEMBER3_MONGO_URI') or
+    'mongodb+srv://admin:123@cluster0.ftlxeqs.mongodb.net/election?appName=Cluster0'
+)
+try:
+    DATABASES = {
+        'default': parse_uri(_default_mongo_uri),
+    }
+except Exception:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_mongodb_backend',
+            'NAME': 'election',
+            'HOST': _default_mongo_uri,
         }
     }
-}
 
 
 # Password validation
@@ -145,7 +196,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
 # Authentication Settings
-LOGIN_URL = '/voting/login/'
+LOGIN_URL = '/voting/station/login/'
 LOGIN_REDIRECT_URL = '/voting/'
-LOGOUT_REDIRECT_URL = '/voting/login/'
-
+LOGOUT_REDIRECT_URL = '/voting/station/login/'

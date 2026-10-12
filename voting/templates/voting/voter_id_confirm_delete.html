@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Delete — Election Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --dark:#0b0d18;--card:#141628;--border:rgba(201,168,76,.2);--text:#e8eaf6;--muted:#7b82a8;--red:#e05252; }
+    html,body { background:var(--dark);color:var(--text);font-family:'Inter',sans-serif;
+                min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px; }
+    .card { background:var(--card);border:1px solid var(--border);border-radius:16px;
+            padding:40px;max-width:440px;width:100%;text-align:center;
+            animation:slide-in .4s cubic-bezier(.22,1,.36,1); }
+    @keyframes slide-in { from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);} }
+    .icon { font-size:3rem;margin-bottom:16px; }
+    h1 { font-size:1.25rem;font-weight:700;margin-bottom:8px; }
+    .detail { background:rgba(255,255,255,.04);border-radius:10px;padding:14px 18px;margin:20px 0;text-align:left; }
+    .detail dt { font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted); }
+    .detail dd { font-size:.92rem;font-weight:600;color:var(--text);margin-bottom:10px; }
+    .detail dd:last-child { margin-bottom:0; }
+    .warn { font-size:.82rem;color:var(--muted);margin-bottom:24px;line-height:1.6; }
+    .btn-row { display:flex;gap:10px;justify-content:center; }
+    .btn { padding:10px 22px;border-radius:9px;font-size:.88rem;font-weight:600;
+           cursor:pointer;border:none;text-decoration:none;display:inline-flex;align-items:center;gap:6px;
+           transition:opacity .2s,transform .1s; }
+    .btn:hover { opacity:.85;transform:translateY(-1px); }
+    .btn-red     { background:rgba(224,82,82,.15);border:1px solid rgba(224,82,82,.35);color:#f08080; }
+    .btn-outline { background:transparent;border:1px solid var(--border);color:var(--muted); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">🗑️</div>
+  <h1>Delete Voter ID?</h1>
+  <dl class="detail">
+    <dt>Voter ID</dt>
+    <dd>{{ voter.voter_id }}</dd>
+    <dt>Name</dt>
+    <dd>{{ voter.full_name }}</dd>
+    <dt>Location</dt>
+    <dd>{{ voter.district }} / {{ voter.division }}</dd>
+    <dt>Status</dt>
+    <dd>{% if voter.has_voted %}✔ Already Voted{% else %}⏳ Not Yet Voted{% endif %}</dd>
+  </dl>
+  <p class="warn">This action is permanent and will be recorded in the audit log.</p>
+  <div class="btn-row">
+    <a href="{% url 'voter_id_list' %}" class="btn btn-outline">← Cancel</a>
+    <form method="post" style="display:inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-red">🗑 Confirm Delete</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

@@ -121,6 +121,7 @@
                     {{ form.nomination_type }}
                 </div>
 
+                <!-- Party Fields -->
                 <div id="party-fields" style="display: none;">
                     <div class="card card-body bg-light mb-3">
                         <h5>Party Details</h5>
@@ -132,20 +133,17 @@
                             {{ form.party_secretary_name.label_tag }}
                             {{ form.party_secretary_name }}
                         </div>
-                        
                         <div class="mb-3" id="party-symbol-display" style="display: none;">
                             <label>Party Symbol (Auto-assigned):</label>
                             <div class="border p-3 text-center bg-white rounded">
-                                <img id="symbol-image" src="" alt="Party Symbol" class="img-fluid" style="max-height: 100px; max-width: 100px;"> 
-                                
-                                <p class="fw-bold mt-2 mb-0" id="symbol-name">Party Symbol</p> 
-                                
-                                <p class="text-muted small mb-0 mt-2">Symbol will be assigned upon registration.</p>
+                                <strong id="symbol-name" class="display-6"></strong>
+                                <p class="text-muted small mb-0">Symbol will be assigned upon registration.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Independent Fields -->
                 <div id="independent-fields" style="display: none;">
                     <div class="card card-body bg-light mb-3">
                         <h5>Independent Candidate Details</h5>
@@ -238,17 +236,14 @@
         const independentFields = document.getElementById('independent-fields');
         const partyName = document.getElementById('id_party_name');
         const symbolDisplay = document.getElementById('party-symbol-display');
-        
-      
-        const symbolNameElement = document.getElementById('symbol-name');
+        const symbolName = document.getElementById('symbol-name');
 
-    
         const partySymbols = {
-        'SLPP': { path: '/media/party_symbols/SLPP.png', name: 'Pohottuwa' },
-        'SJB': { path: '/media/party_symbols/SJB.png', name: 'Telephone' },
-        'NPP': { path: '/media/party_symbols/NPP.png', name: 'Compass' },
-        'SLFP': { path: '/media/party_symbols/SLFP.png', name: 'Hand' },
-        'UNP': { path: '/media/party_symbols/United National Freedom Front.png', name: 'Elephant' }
+            'SLPP': '🌸 (Pohottuwa)',
+            'SJB': '📞 (Telephone)',
+            'NPP': '🧭 (Compass)',
+            'SLFP': '🖐 (Hand)',
+            'UNP': '🐘 (Elephant)'
         };
 
         const partySecretaries = {
@@ -276,19 +271,13 @@
         function updatePartyDetails() {
             const party = partyName.value;
             const secretaryField = document.getElementById('id_party_secretary_name');
-            const symbolImage = document.getElementById('symbol-image');
-            
+
             // Update Symbol
             if (party && partySymbols[party]) {
-                const symbolDetails = partySymbols[party]; 
-
                 symbolDisplay.style.display = 'block';
-                symbolImage.src = symbolDetails.path; 
-                symbolNameElement.textContent = symbolDetails.name; 
+                symbolName.textContent = partySymbols[party];
             } else {
                 symbolDisplay.style.display = 'none';
-                symbolImage.src = '';
-                symbolNameElement.textContent = 'Party Symbol'; 
             }
 
             // Auto-fill Secretary Name

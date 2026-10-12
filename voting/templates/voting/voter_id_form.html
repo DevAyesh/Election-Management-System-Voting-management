@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ action }} Voter ID — Election Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-lt: #e8c97a;
+      --dark: #0b0d18; --card: #141628;
+      --border: rgba(201,168,76,.2); --text: #e8eaf6; --muted: #7b82a8;
+    }
+    html, body { background: var(--dark); color: var(--text); font-family: 'Inter',sans-serif;
+                 min-height: 100vh; display: flex; flex-direction: column; align-items: center;
+                 justify-content: flex-start; padding: 40px 20px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+            padding: 40px; width: 100%; max-width: 500px;
+            animation: slide-in .4s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes slide-in { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    .back { color: var(--muted); text-decoration: none; font-size: .82rem; display: inline-flex;
+            align-items: center; gap: 4px; margin-bottom: 24px; transition: color .2s; }
+    .back:hover { color: var(--gold); }
+
+    h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+    .sub { font-size: .8rem; color: var(--muted); margin-bottom: 28px; }
+
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: .82rem; margin-bottom: 16px;
+           display: flex; gap: 8px; align-items: flex-start; }
+    .msg-error { background: rgba(224,82,82,.12); border: 1px solid rgba(224,82,82,.3); color: #f08080; }
+
+    label { display: block; font-size: .75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .07em; color: var(--muted); margin-bottom: 7px; margin-top: 18px; }
+    label:first-of-type { margin-top: 0; }
+    input[type="text"], select {
+      width: 100%; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 9px; color: var(--text); font-family: 'Inter',sans-serif;
+      font-size: .9rem; padding: 11px 14px; outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus, select:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.15); }
+    select option { background: #1a1e34; }
+
+    .hint { font-size: .72rem; color: var(--muted); margin-top: 5px; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 28px; }
+    .btn { padding: 11px 20px; border-radius: 9px; font-size: .88rem; font-weight: 600;
+           cursor: pointer; border: none; text-decoration: none;
+           display: inline-flex; align-items: center; gap: 6px;
+           transition: opacity .2s, transform .1s; }
+    .btn:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-gold    { background: linear-gradient(135deg,var(--gold),var(--gold-lt)); color: #0d0f1a; flex: 1; justify-content: center; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <a href="{% url 'voter_id_list' %}" class="back">← Back to list</a>
+  <h1>🪪 {{ action }} Voter ID</h1>
+  <p class="sub">Add a temporary voter record for POC testing purposes.</p>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="msg msg-error">⚠️ {{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" id="voterForm">
+    {% csrf_token %}
+
+    <label for="voter_id">NIC / Voter ID *</label>
+    <input type="text" id="voter_id" name="voter_id"
+           placeholder="e.g. 199912345678 or 980123456V"
+           required maxlength="20" autocomplete="off"
+           style="text-transform:uppercase"
+           value="{{ request.POST.voter_id|default:'' }}">
+    <div class="hint">National ID card number or voter registration number</div>
+
+    <label for="full_name">Full Name *</label>
+    <input type="text" id="full_name" name="full_name"
+           placeholder="e.g. Kamal Perera"
+           required maxlength="200"
+           value="{{ request.POST.full_name|default:'' }}">
+
+    <label for="district">Electoral District *</label>
+    <select id="district" name="district" required onchange="updateDivisions()">
+      <option value="">— Select District —</option>
+      {% for num, name in districts %}
+      <option value="{{ name }}" {% if request.POST.district == name %}selected{% endif %}>
+        {{ num|stringformat:"02d" }} — {{ name }}
+      </option>
+      {% endfor %}
+    </select>
+
+    <label for="division">Polling Division *</label>
+    <select id="division" name="division" required>
+      <option value="">— Select Division —</option>
+      {% if request.POST.division %}
+      <option value="{{ request.POST.division }}" selected>{{ request.POST.division }}</option>
+      {% endif %}
+    </select>
+
+    <div class="btn-row">
+      <a href="{% url 'voter_id_list' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-gold" id="submitBtn">✅ {{ action }} ID</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const divisionsData = {{ divisions_json|safe }};
+
+function updateDivisions() {
+  const district  = document.getElementById('district').value;
+  const divSelect = document.getElementById('division');
+  const current   = divSelect.value;
+  divSelect.innerHTML = '<option value="">— Select Division —</option>';
+
+  const divs = divisionsData[district] || [];
+  divs.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    if (d === current) opt.selected = true;
+    divSelect.appendChild(opt);
+  });
+}
+
+// Init on load if district pre-selected
+window.addEventListener('load', updateDivisions);
+
+// Auto-uppercase voter ID
+document.getElementById('voter_id').addEventListener('input', function() {
+  this.value = this.value.toUpperCase();
+});
+
+// Disable on submit
+document.getElementById('voterForm').addEventListener('submit', () => {
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+</body>
+</html>

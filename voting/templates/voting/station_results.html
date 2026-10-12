@@ -1,0 +1,662 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Results - Election Commission</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Top Bar ── */
+        .top-bar {
+            background-color: white;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .home-icon {
+            font-size: 1.8rem;
+            margin-right: 10px;
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .page-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.35rem;
+            font-weight: bold;
+            color: black;
+        }
+
+        /* ── Election Commission Box ── */
+        .commission-container {
+            display: flex;
+            justify-content: center;
+            padding: 6px;
+            background-color: white;
+            position: fixed;
+            top: 48px; left: 0; right: 0;
+            z-index: 99;
+        }
+
+        .commission-box {
+            background-color: #e8e8e8;
+            border: 1px solid #aaa;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 2500px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .commission-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            gap: 12px;
+        }
+
+        .emblem { width: 50px; height: auto; }
+
+        .text-content {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .text-sinhala {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1rem; color: #4b0082; font-weight: bold;
+        }
+
+        .text-tamil {
+            font-family: 'Latha', 'Nirmala UI', sans-serif;
+            font-size: 0.85rem; color: #4b0082; margin: 2px 0;
+        }
+
+        .text-english {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem; color: #4b0082; font-weight: bold;
+        }
+
+        /* ── Colour Strip ── */
+        .color-strip { display: flex; height: 6px; width: 100%; margin-top: 4px; }
+        .strip-green  { background-color: #005f56; flex: 1; }
+        .strip-orange { background-color: #e37e00; flex: 1; }
+        .strip-yellow { background-color: #ffc400; flex: 2; }
+        .strip-maroon { background-color: #781830; flex: 3; }
+
+        /* ── Station Strip ── */
+        .station-strip {
+            background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 20px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            position: fixed;
+            top: 155px; left: 0; right: 0;
+            z-index: 98;
+            box-shadow: 0 2px 6px rgba(120,24,48,0.25);
+        }
+
+        .station-strip a {
+            color: #ffc400;
+            text-decoration: none;
+            font-size: 0.78rem;
+            margin-left: 20px;
+            transition: opacity .2s;
+        }
+
+        .station-strip a:hover { opacity: .75; }
+
+        /* ── Main Content ── */
+        .main-content {
+            margin-top: 183px;
+            padding: 20px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ── Results Header ── */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-title {
+            font-family: 'Iskoola Pota', 'Nirmala UI', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #4b0082;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            font-size: 1rem;
+            color: #718096;
+            margin: 5px 0 0 0;
+        }
+
+        /* ── Stats Cards ── */
+        .stats-row {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 22px;
+            text-align: center;
+            min-width: 130px;
+            flex: 1;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #781830;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #718096;
+            margin-top: 4px;
+        }
+
+        /* ── Results Table ── */
+        .results-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+        }
+
+        .results-table { width: 100%; border-collapse: collapse; }
+
+        .results-table thead {
+            background: linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 100%);
+            border-bottom: 3px solid #781830;
+        }
+
+        .results-table th {
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: bold;
+            color: #4b0082;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .results-table th.text-center { text-align: center; }
+
+        .results-table tbody tr {
+            border-bottom: 1px solid #e8e8e8;
+            transition: background-color .2s;
+        }
+
+        .results-table tbody tr:hover { background-color: #f9f9f9; }
+        .results-table tbody tr:last-child { border-bottom: none; }
+
+        .results-table td { padding: 18px 20px; color: #2d3748; }
+
+        /* ── Candidate Cell ── */
+        .candidate-cell { display: flex; align-items: center; gap: 12px; }
+
+        .party-symbol-result {
+            width: 42px; height: 42px;
+            object-fit: contain;
+            background-color: #f9f9f9;
+            border-radius: 50%;
+            padding: 3px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .candidate-color {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .candidate-name { font-weight: 600; font-size: 1rem; color: #1a202c; }
+
+        /* ── Party Badge ── */
+        .party-badge {
+            background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+            color: #4b0082;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid #d1c4e9;
+            display: inline-block;
+        }
+
+        /* ── Vote Counts ── */
+        .vote-count { text-align: center; font-weight: bold; font-size: 1.15rem; }
+        .vote-count.first  { color: #800080; font-size: 1.4rem; }
+        .vote-count.second { color: #008000; }
+        .vote-count.third  { color: #800000; }
+
+        /* ── Progress Bar ── */
+        .progress-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width .6s ease;
+        }
+
+        /* ── Empty State ── */
+        .empty-state { text-align: center; padding: 60px 20px; color: #a0aec0; }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 15px; opacity: .5; }
+        .empty-state-text { font-size: 1.1rem; font-weight: 500; }
+
+        /* ── Footer Note ── */
+        .refresh-note {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            color: #718096;
+            font-size: 0.9rem;
+            border-left: 3px solid #4b0082;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+            transition: opacity .2s, transform .1s;
+        }
+
+        .btn:hover { opacity: .85; transform: translateY(-1px); }
+
+        .btn-ballot {
+            background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(120,24,48,.25);
+        }
+
+        .btn-logout {
+            background: white;
+            color: #781830;
+            border: 2px solid #781830;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .results-table th,
+            .results-table td { padding: 12px 10px; font-size: .85rem; }
+            .candidate-name { font-size: .9rem; }
+            .vote-count { font-size: 1rem; }
+            .vote-count.first { font-size: 1.2rem; }
+            .results-title { font-size: 1.4rem; }
+        }
+        @keyframes tamperBlink {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+            }
+            50% {
+                opacity: 0.35;
+                transform: scale(1.04);
+                box-shadow: 0 0 12px 3px rgba(220, 38, 38, 0.5);
+            }
+        }
+
+        .btn-tamper-blink {
+            animation: tamperBlink 1s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <a href="{% url 'voting_index' %}" class="home-icon">🏠</a>
+        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    </div>
+
+    <!-- Election Commission Box -->
+    <div class="commission-container">
+        <div class="commission-box">
+            <div class="commission-content">
+                <img src="{% static 'voting/images/emblem.svg' %}" alt="Emblem" class="emblem">
+                <div class="text-content">
+                    <div class="text-sinhala">මැතිවරණ කොමිෂන් සභාව</div>
+                    <div class="text-tamil">தேர்தல் ஆணைக்குழு</div>
+                    <div class="text-english">Election Commission</div>
+                </div>
+            </div>
+            <div class="color-strip">
+                <div class="strip-green"></div>
+                <div class="strip-orange"></div>
+                <div class="strip-yellow"></div>
+                <div class="strip-maroon"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Station Strip -->
+    <div class="station-strip">
+        <span>🗳️ &nbsp;{{ station_name }} &nbsp;·&nbsp; Station Results</span>
+        <span>
+            <a href="{% url 'station_logout' %}" style="color:#ffb0b0;">End Session</a>
+        </span>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+        <!-- Header -->
+        <div class="results-header">
+            <div>
+                <h1 class="results-title">ස්ථාන ප්‍රතිඵල</h1>
+                <p class="results-subtitle">
+                    Station Vote Count &nbsp;·&nbsp;
+                    <strong>{{ station_name }}</strong>
+                    &nbsp;·&nbsp; Total: <strong>{{ total_votes }}</strong> vote{{ total_votes|pluralize }}
+                </p>
+            </div>
+            <div class="action-btns">
+                {% if not excluded_blocks and not ledger_status or not excluded_blocks and ledger_status.ok %}
+                <span style="display:inline-flex;align-items:center;gap:6px;background:#f0fdf4;border:1px solid #16a34a;color:#15803d;padding:6px 12px;border-radius:6px;font-size:0.8rem;font-weight:600;">
+                    Ledger OK
+                </span>
+                {% else %}
+                <button id="btn-tamper-detail" onclick="openTamperModal()" class="btn-tamper-blink" style="display:inline-flex;align-items:center;gap:6px;background:#fff1f2;border:2px solid #dc2626;color:#b91c1c;padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:700;cursor:pointer;">
+                    Tampered
+                </button>
+                {% endif %}
+                <a href="{% url 'station_logout' %}" class="btn btn-logout">End Session</a>
+            </div>
+        </div>
+
+        <!-- Ledger Integrity Banner -->
+        {% if not excluded_blocks and not ledger_status or not excluded_blocks and ledger_status.ok %}
+        <div style="background:#f0fdf4;border:1px solid #16a34a;border-radius:8px;padding:8px 14px;margin-bottom:18px;display:flex;align-items:center;gap:8px;color:#15803d;font-size:0.85rem;font-weight:600;">
+            <span>Integrity OK</span>
+        </div>
+        {% else %}
+        <div style="background:#fffbeb;border:2px solid #f59e0b;border-radius:8px;padding:12px 18px;margin-bottom:18px;color:#92400e;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <strong style="font-size:0.95rem;">INTEGRITY WARNING - {{ excluded_blocks|length }} vote(s) excluded from the count. Voting is continuing.</strong>
+                <button onclick="openTamperModal()" style="background:none;border:none;color:#b45309;text-decoration:underline;cursor:pointer;font-size:0.83rem;font-weight:700;padding:0;">විස්තර බලන්න / View Details / விவரங்கள் காண்க</button>
+            </div>
+            {% if ledger_status.voting_locked %}
+            <div style="font-size:0.85rem;margin-top:6px;color:#b91c1c;font-weight:700;">
+                Voting is locked.
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-num">{{ total_votes }}</div>
+                <div class="stat-label">Total Votes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#800080">{{ first_count }}</div>
+                <div class="stat-label">1st Pref.</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#008000">{{ second_count }}</div>
+                <div class="stat-label">2nd Pref.</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color:#800000">{{ third_count }}</div>
+                <div class="stat-label">3rd Pref.</div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="results-container">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Candidate &bull; අපේක්ෂකයා</th>
+                        <th>Party &bull; පක්ෂය</th>
+                        <th class="text-center">1st Pref. &bull; පළමු</th>
+                        <th class="text-center">2nd Pref. &bull; දෙවන</th>
+                        <th class="text-center">3rd Pref. &bull; තෙවන</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td>
+                            <div class="candidate-cell">
+                                {% if row.party_symbol_url %}
+                                <img src="{{ row.party_symbol_url }}" alt="{{ row.party }} symbol" class="party-symbol-result">
+                                {% endif %}
+                                <span class="candidate-color" style="background-color: {{ row.color }};"></span>
+                                <span class="candidate-name">{{ row.name }}</span>
+                            </div>
+                        </td>
+                        <td><span class="party-badge">{{ row.party }}</span></td>
+                        <td class="vote-count first">
+                            {{ row.counts.1 }}
+                            {% if total_votes > 0 %}
+                            <div class="progress-wrap">
+                                <div class="progress-bar">
+                                    <div class="progress-fill"
+                                        style="width:{% widthratio row.counts.1 total_votes 100 %}%;background:#800080;"></div>
+                                </div>
+                                <span style="font-size:.65rem;font-weight:400;color:#718096;min-width:28px">
+                                    {% widthratio row.counts.1 total_votes 100 %}%
+                                </span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="vote-count second">{{ row.counts.2 }}</td>
+                        <td class="vote-count third">{{ row.counts.3 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <div class="empty-state-text">
+                                    මෙම ස්ථානයෙන් තවමත් ඡන්ද වාර්තා වී නැත<br>
+                                    No votes recorded for this station yet
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+
+
+    </div>
+
+    {% if excluded_blocks or ledger_status and not ledger_status.ok %}
+    <!-- ===== TAMPER DETAIL MODAL ===== -->
+    <div id="tamper-modal-overlay" style="
+        display:none; position:fixed; inset:0; z-index:9999;
+        background:rgba(0,0,0,0.65); backdrop-filter:blur(4px);
+        align-items:center; justify-content:center; padding:16px;
+    ">
+        <div style="
+            background:#fff; border-radius:14px; max-width:660px; width:100%;
+            box-shadow:0 20px 60px rgba(0,0,0,0.35);
+            overflow:hidden; animation:slideUp 0.25s ease;
+        ">
+            <!-- Modal Header -->
+            <div style="background:#b91c1c;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div>
+                        <div style="color:#fff;font-size:1.05rem;font-weight:700;line-height:1.2;">ගොනු නිඛිල ව්‍යාකූල ව ඇත</div>
+                        <div style="color:#fca5a5;font-size:0.78rem;margin-top:2px;">Blockchain Integrity Warning &nbsp;&bull;&nbsp; தகவல் திருத்தம் கண்டறியப்பட்டது</div>
+                    </div>
+                </div>
+                <button onclick="closeTamperModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:1.4rem;cursor:pointer;border-radius:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;">&times;</button>
+            </div>
+
+            <!-- Three-language explanation -->
+            <div style="padding:20px 22px;">
+
+                <!-- SINHALA -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">සිංහල</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">ඡන්ද දත්ත හෝ අඛණ්ඩ ලේජරය වෙනස් කර ඇත</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        ඡන්ද ගොනු හෝ බ්ලොක්චේන් ලේජරය වෙනස් කර ඇති බව හඳුනා ගන්නා ලදී.
+                        දූෂිත ඡන්ද ගණනයෙන් බැහැර කර ඇති අතර ඡන්දය ප්‍රකාශ කිරීම අඛණ්ඩව සිදුවේ.
+                        {% if ledger_status.voting_locked %}ඡන්ද ක්‍රියාවලිය අවහිර කර ඇත. ප්‍රධාන නිලධාරියා සම්බන්ධ කරගන්න.{% endif %}
+                    </div>
+                </div>
+
+                <!-- ENGLISH -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:14px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">ENGLISH</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">Tampered Vote Data or Ledger Detected</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        The cryptographic blockchain ledger does not match the vote database.
+                        {{ excluded_blocks|length }} vote(s) excluded from the count. Voting is continuing.
+                        {% if ledger_status.voting_locked %}Voting is locked. Contact the presiding officer immediately.{% endif %}
+                    </div>
+                </div>
+
+                <!-- TAMIL -->
+                <div style="background:#fff1f2;border-left:4px solid #dc2626;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:16px;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#9ca3af;letter-spacing:0.08em;margin-bottom:4px;">தமிழ்</div>
+                    <div style="font-size:0.95rem;font-weight:700;color:#b91c1c;margin-bottom:4px;">வாக்கு தரவு அல்லது பதிவேட்டில் மாற்றம் கண்டறியப்பட்டது</div>
+                    <div style="font-size:0.86rem;color:#374151;line-height:1.55;">
+                        வாக்கு தரவுத்தளம் மற்றும் கிரிப்டோகிராஃபிக் பதிவேடு ஒத்துப்போகவில்லை.
+                        {{ excluded_blocks|length }} வாக்கு(கள்) எண்ணிக்கையிலிருந்து விலக்கப்பட்டுள்ளன. வாக்களிப்பு தொடர்கிறது.
+                        {% if ledger_status.voting_locked %}வாக்களிப்பு பூட்டப்பட்டுள்ளது. தலைமை அதிகாரியை உடனடியாக தொடர்பு கொள்ளவும்.{% endif %}
+                    </div>
+                </div>
+
+                <!-- Technical Detail -->
+                <div style="background:#1e1e2e;border-radius:8px;padding:12px 14px;">
+                    <div style="font-size:0.72rem;font-weight:700;color:#6b7280;letter-spacing:0.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+                        TECHNICAL CAUSE / තාක්ෂණික හේතුව / தொழில்நுட்ப காரணம்
+                    </div>
+                    <div style="font-family:'Courier New',monospace;font-size:0.78rem;color:#f87171;word-break:break-all;line-height:1.5;">
+                        {% if ledger_status.detail %}{{ ledger_status.detail }}{% elif integrity_error %}{{ integrity_error }}{% endif %}
+                    </div>
+                    {% if excluded_blocks %}
+                    <div style="margin-top:6px;font-family:'Courier New',monospace;font-size:0.75rem;color:#fb923c;">Excluded blocks: {{ excluded_blocks }}</div>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top:1px solid #fee2e2;padding:12px 22px;display:flex;justify-content:flex-end;gap:10px;background:#fef2f2;">
+                <button onclick="closeTamperModal()" style="background:#dc2626;color:#fff;border:none;padding:9px 22px;border-radius:7px;font-size:0.88rem;font-weight:700;cursor:pointer;">Close / වසන්න / மூடு</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+    </style>
+    {% endif %}
+
+    <script>
+        // Auto-refresh every 30 seconds
+        setTimeout(function () { location.reload(); }, 30000);
+
+        // Live clock
+        function updateTimestamp() {
+            const now = new Date();
+            const t = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            const el = document.getElementById('clock');
+            if (el) el.textContent = t;
+        }
+        setInterval(updateTimestamp, 1000);
+        updateTimestamp();
+
+        // Tamper modal
+        function openTamperModal() {
+            const m = document.getElementById('tamper-modal-overlay');
+            if (m) { m.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        }
+        function closeTamperModal() {
+            const m = document.getElementById('tamper-modal-overlay');
+            if (m) { m.style.display = 'none'; document.body.style.overflow = ''; }
+        }
+
+    </script>
+
+</body>
+</html>

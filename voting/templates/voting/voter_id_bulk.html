@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bulk Import Voter IDs — Election Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-lt: #e8c97a;
+      --dark: #0b0d18; --card: #141628; --card2: #1a1e34;
+      --border: rgba(201,168,76,.2); --text: #e8eaf6; --muted: #7b82a8;
+    }
+    html, body { background: var(--dark); color: var(--text); font-family: 'Inter',sans-serif;
+                 min-height: 100vh; padding: 40px 20px; }
+    .wrap { max-width: 760px; margin: 0 auto; }
+
+    .back { color: var(--muted); text-decoration: none; font-size: .82rem; display: inline-flex;
+            align-items: center; gap: 4px; margin-bottom: 24px; transition: color .2s; }
+    .back:hover { color: var(--gold); }
+
+    h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 6px; }
+    .sub { font-size: .82rem; color: var(--muted); margin-bottom: 28px; }
+
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 28px; margin-bottom: 20px; }
+
+    label { display: block; font-size: .75rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .07em; color: var(--muted); margin-bottom: 7px; margin-top: 18px; }
+    label:first-of-type { margin-top: 0; }
+
+    select {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 9px; color: var(--text); font-family: 'Inter',sans-serif;
+      font-size: .88rem; padding: 10px 14px; outline: none; width: 100%;
+      transition: border-color .2s; margin-bottom: 4px;
+    }
+    select:focus { border-color: var(--gold); }
+    select option { background: #1a1e34; }
+
+    textarea {
+      width: 100%; min-height: 240px;
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px; color: var(--text);
+      font-family: 'Courier New', monospace; font-size: .85rem;
+      padding: 14px; outline: none; resize: vertical;
+      transition: border-color .2s, box-shadow .2s;
+      line-height: 1.6;
+    }
+    textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,.12); }
+
+    .hint-box {
+      background: var(--card2); border: 1px solid rgba(255,255,255,.07);
+      border-radius: 10px; padding: 16px 18px; margin-top: 14px;
+      font-size: .78rem; color: var(--muted); line-height: 1.7;
+    }
+    .hint-box code {
+      background: rgba(201,168,76,.1); color: var(--gold);
+      padding: 1px 6px; border-radius: 4px; font-family: monospace;
+    }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 500px) { .row { grid-template-columns: 1fr; } }
+
+    .counter { font-size: .75rem; color: var(--muted); text-align: right; margin-top: 5px; }
+    .counter span { color: var(--gold); font-weight: 600; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+    .btn { padding: 11px 22px; border-radius: 9px; font-size: .9rem; font-weight: 600;
+           cursor: pointer; border: none; text-decoration: none;
+           display: inline-flex; align-items: center; gap: 6px;
+           transition: opacity .2s, transform .1s; }
+    .btn:hover { opacity: .85; transform: translateY(-1px); }
+    .btn-gold    { background: linear-gradient(135deg,var(--gold),var(--gold-lt)); color: #0d0f1a; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+
+    .msg { padding: 10px 14px; border-radius: 8px; font-size: .82rem; margin-bottom: 16px; display: flex; gap: 8px; }
+    .msg-error   { background: rgba(224,82,82,.12); border: 1px solid rgba(224,82,82,.3); color: #f08080; }
+    .msg-success { background: rgba(76,175,125,.12); border: 1px solid rgba(76,175,125,.3); color: #80d4a8; }
+    .msg-warning { background: rgba(255,200,80,.10); border: 1px solid rgba(255,200,80,.3); color: #ffc850; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <a href="{% url 'voter_id_list' %}" class="back">← Back to list</a>
+  <h1>📋 Bulk Import Voter IDs</h1>
+  <p class="sub">Paste a CSV block to create multiple voter IDs at once. Duplicates are automatically skipped.</p>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="msg
+        {% if msg.tags == 'error' %}msg-error
+        {% elif msg.tags == 'success' %}msg-success
+        {% else %}msg-warning{% endif %}">
+        {% if msg.tags == 'error' %}⚠️{% elif msg.tags == 'success' %}✅{% else %}ℹ️{% endif %}
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" id="bulkForm">
+    {% csrf_token %}
+
+    <div class="card">
+      <h3 style="font-size:.95rem;margin-bottom:16px">Default District & Division</h3>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:14px">
+        Applied to rows that don't specify their own district/division (columns 3 &amp; 4).
+      </p>
+      <div class="row">
+        <div>
+          <label for="district">District</label>
+          <select id="district" name="district" onchange="updateDivisions()">
+            <option value="">— Leave blank if using per-row —</option>
+            {% for num, name in districts %}
+            <option value="{{ name }}">{{ num|stringformat:"02d" }} — {{ name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="division">Division</label>
+          <select id="division" name="division">
+            <option value="">— Select after district —</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <label for="bulk_data">Paste CSV Data</label>
+      <textarea
+        id="bulk_data" name="bulk_data"
+        placeholder="199912345678, Kamal Perera
+200056789012, Nimal Silva, Gampaha, Negombo
+199978901234, Kamala Fernando, Colombo, Kaduwela"
+        oninput="updateCounter()"
+        required
+      ></textarea>
+      <div class="counter">Lines: <span id="lineCount">0</span></div>
+
+      <div class="hint-box">
+        <strong>Format:</strong> one row per line<br>
+        <code>voter_id, full_name</code> — uses default district &amp; division above<br>
+        <code>voter_id, full_name, district, division</code> — overrides per row<br><br>
+        <strong>Rules:</strong> Voter IDs are auto-uppercased. Duplicates are skipped. Blank lines ignored.
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <a href="{% url 'voter_id_list' %}" class="btn btn-outline">Cancel</a>
+      <button type="submit" class="btn btn-gold" id="submitBtn">📋 Import All</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const divisionsData = {{ divisions_json|safe }};
+
+function updateDivisions() {
+  const district  = document.getElementById('district').value;
+  const divSelect = document.getElementById('division');
+  divSelect.innerHTML = '<option value="">— Select Division —</option>';
+  (divisionsData[district] || []).forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d;
+    divSelect.appendChild(o);
+  });
+}
+
+function updateCounter() {
+  const lines = document.getElementById('bulk_data').value
+    .split('\n').filter(l => l.trim().length > 0).length;
+  document.getElementById('lineCount').textContent = lines;
+}
+
+document.getElementById('bulkForm').addEventListener('submit', () => {
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').textContent = 'Importing…';
+});
+</script>
+</body>
+</html>

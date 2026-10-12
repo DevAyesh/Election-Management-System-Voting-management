@@ -896,9 +896,14 @@
 
 <body>
 
-    <div class="top-bar">
-        <span class="home-icon">🏠</span>
-        <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+    <div class="top-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center;">
+            <a href="{% url 'qr_verification' %}" class="home-icon" style="text-decoration:none; cursor:pointer;" title="QR සත්‍යාපන කවුළුව / Voter QR Verification Terminal">🏠</a>
+            <div class="page-title">ජනාධිපතිවරණය - 2030</div>
+        </div>
+        <a href="{% url 'station_logout' %}" style="color: #c0405a; text-decoration: none; font-size: 0.82rem; font-weight: 700; padding: 5px 12px; border: 1.5px solid #c0405a; border-radius: 5px; transition: all 0.2s; display: inline-flex; align-items: center; gap: 5px;" onmouseover="this.style.background='#c0405a'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#c0405a';" title="End Station Session">
+            🚪 Logout / ඉවත් වන්න
+        </a>
     </div>
 
     <div class="commission-container">
@@ -921,7 +926,31 @@
         </div>
     </div>
 
-    <div class="main-scroll">
+    <!-- Polling Station Info Bar -->
+    {% if station_name %}
+    <div style="
+        background: linear-gradient(135deg, #781830 0%, #9a2848 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 18px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        position: fixed;
+        top: 155px;
+        left: 0; right: 0;
+        z-index: 98;
+        box-shadow: 0 2px 6px rgba(120,24,48,0.25);
+    ">
+        <span>🗳️ &nbsp;{{ station_name }}</span>
+        <span style="display:flex;gap:16px;align-items:center;">
+            <span id="countdown-timer" style="color:#ffc400;font-size:0.78rem;font-family:monospace;">⏳ Time remaining: calculating...</span>
+        </span>
+    </div>
+    {% endif %}
+
+    <div class="main-scroll" style="{% if station_name %}top: 183px;{% endif %}">
         <div class="main-content">
             {% for candidate in candidates %}
             {% if forloop.counter0|divisibleby:4 %}
@@ -1123,7 +1152,8 @@
             }
 
             const payload = {
-                preferences: {}
+                preferences: {},
+                phone_number: '+94787570003'
             };
             if (preferences[1]) payload.preferences['1'] = preferences[1].id;
             if (preferences[2]) payload.preferences['2'] = preferences[2].id;
@@ -1144,6 +1174,10 @@
                         showSuccessModal();
                         // Reset preferences after showing modal
                         resetPreferences();
+                        // Auto-return terminal to QR verification window for next voter after 4 seconds
+                        setTimeout(() => {
+                            window.location.href = "{% url 'qr_verification' %}";
+                        }, 4000);
                     } else {
                         alert('Error: ' + data.message);
                     }
@@ -1179,6 +1213,10 @@
         function closeSuccessModal() {
             const modal = document.getElementById('successModal');
             modal.classList.remove('show');
+            // Return terminal to QR verification window for next voter
+            setTimeout(() => {
+                window.location.href = "{% url 'qr_verification' %}";
+            }, 300);
         }
 
         // Close modal when clicking outside of it
@@ -1343,7 +1381,40 @@
             </div>
         </div>
     </div>
+    <script>
+        // Countdown Timer Logic
+        const expiryTimestamp = {{ expiry_timestamp|default:0 }};
+        const timerElement = document.getElementById('countdown-timer');
 
+        function updateTimer() {
+            if (!expiryTimestamp) return;
+
+            const now = new Date().getTime();
+            const distance = expiryTimestamp - now;
+
+            if (distance < 0) {
+                if (timerElement) timerElement.innerHTML = "🛑 Voting Closed";
+                return;
+            }
+
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const hh = String(hours).padStart(2, '0');
+            const mm = String(minutes).padStart(2, '0');
+            const ss = String(seconds).padStart(2, '0');
+
+            if (timerElement) {
+                timerElement.innerHTML = "⏳ Time remaining: " + hh + ":" + mm + ":" + ss;
+            }
+        }
+
+        if (expiryTimestamp > 0) {
+            updateTimer(); // Initial call
+            setInterval(updateTimer, 1000);
+        }
+    </script>
 </body>
 
 </html>

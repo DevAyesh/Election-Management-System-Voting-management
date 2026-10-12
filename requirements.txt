@@ -2,3 +2,4 @@ Django==5.2.9
 django-mongodb-backend==5.2.3
 pillow==11.3.0
 cryptography==46.0.3
+python-dotenv==1.1.1
